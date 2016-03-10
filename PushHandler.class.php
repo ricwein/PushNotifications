@@ -61,9 +61,22 @@ abstract class PushHandler {
 		return $this;
 	}
 
+	public function prepare() {
+		if (count($this->_devices) === 0) {
+			return false;
+		} elseif (empty($this->_server['token'])) {
+			throw new Exception('server token not set', 500);
+		} elseif (empty($this->_server['url'])) {
+			throw new Exception('server url not set', 500);
+		}
+
+		return true;
+	}
+
 	/**
 	 * @param string $message
-	 * @param mixed $data
+	 * @param array $data
+	 * @return bool
 	 */
-	abstract public function send($message, $data = null);
+	abstract public function send($message, array $data = null);
 }

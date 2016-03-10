@@ -5,7 +5,7 @@ require_once __DIR__ . '/../PushHandler.class.php';
 class GCMHandler extends PushHandler {
 
 	/**
-	 * @var string
+	 * @var array
 	 */
 	protected $_server = [
 		'token' => '',
@@ -13,58 +13,62 @@ class GCMHandler extends PushHandler {
 	];
 
 	/**
-	 * @param $message
-	 * @param $data
-	 * @return mixed
+	 * @param string $message
+	 * @param array $data
+	 * @return bool
 	 */
-	public function send($message, $data = null) {
+	public function send($message, array $data = null) {
 
-		if (count($this->_devices) == 0) {
-			return false;
-		}
-
-		if (strlen($this->_server['token']) < 8) {
-			throw new Exception('API token not set', 500);
-		}
-
-		$fields = [
+		// init payload
+		$payload = [
 			'registration_ids' => $this->_devices,
 			'data'             => ['message' => $message],
 		];
 
+		// apply additional data to payload
 		if (is_array($data)) {
-			foreach ($data as $key => $value) {
-				$fields['data'][$key] = $value;
-			}
+			$payload['data'] = array_merge($payload['data'], $data);
 		}
 
+		// init http-headers
 		$headers = [
 			'Authorization: key=' . $this->_server['token'],
 			'Content-Type: application/json',
 		];
 
-		// Open connection
+		// open curl connection
 		$curl = curl_init();
 
-		// Set the url, number of POST vars, POST data
+		// set url
 		curl_setopt($curl, CURLOPT_URL, $this->_server['url']);
 
+		// apply headers and set type to POST
 		curl_setopt($curl, CURLOPT_POST, true);
 		curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+
+		// return response instead of status
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 
-		curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($fields));
+		// append payload
+		curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($payload));
 
-		// Avoids problem with https certificate
+		// check certificates
 		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
 
-		// Execute post
+		// send request
 		$result = curl_exec($curl);
 
-		// Close connection
+		if ($result === false) {
+			$error = curl_error($curl);
+			curl_close($curl);
+			throw new Exception('error processing GCM: ' . $error, 500);
+		}
+
+		// remeber to close the connection when finished
 		curl_close($curl);
 
+		// decode response and check if sending to all devices succeeded
 		$result = @json_decode($result, true);
 		return (isset($result['success']) && (int) $result['success'] === count($this->_devices));
 	}

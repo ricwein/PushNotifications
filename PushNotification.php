@@ -20,13 +20,17 @@ class PushNotification {
 	/**
 	 * @param string $message
 	 * @param array $data (optional)
+	 * @return bool
 	 */
-	public function send($message, $data = null) {
+	public function send($message, array $data = null) {
+		if (!$this->_handler->prepare()) {
+			return false;
+		}
 		return $this->_handler->send($message, $data);
 	}
 
 	/**
-	 * wraps handler-methods, and returns $this
+	 * wrap handler-methods and return $this
 	 * @param string $name
 	 * @param mixed $arguments
 	 * @return $this
