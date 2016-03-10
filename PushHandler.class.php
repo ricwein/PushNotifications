@@ -3,7 +3,7 @@
 abstract class PushHandler {
 
 	/**
-	 * @var string
+	 * @var array
 	 */
 	protected $_server = [
 		'key' => '',
@@ -16,15 +16,15 @@ abstract class PushHandler {
 	protected $_devices = [];
 
 	/**
-	 * @param $apiKey
-	 * @param NULL $url
+	 * @param string $apiKey (optional)
+	 * @param string $url (optional)
 	 */
-	public function __construct($apiKey = NULL, $url = NULL) {
-		if ($apiKey !== NULL) {
+	public function __construct($apiKey = null, $url = null) {
+		if ($apiKey !== null) {
 			$this->setServerKey($apiKey);
 		}
 
-		if ($url !== NULL) {
+		if ($url !== null) {
 			$this->setUrl($url);
 		}
 	}
@@ -46,7 +46,7 @@ abstract class PushHandler {
 	}
 
 	/**
-	 * @param $device
+	 * @param mixed $device
 	 */
 	public function addDevice($device) {
 		$this->_devices = array_merge($this->_devices, (array) $device);
@@ -57,5 +57,5 @@ abstract class PushHandler {
 	 * @param string $message
 	 * @param mixed $data
 	 */
-	abstract public function send($message, $data = false) {return false;}
+	abstract public function send($message, $data = null);
 }

@@ -5,20 +5,30 @@ require_once __DIR__ . '/handler/GCMHandler.class.php';
 class PushNotification {
 
 	/**
-	 * @var mixed
+	 * @var PushHandler
 	 */
-	protected $_handler = NULL;
+	protected $_handler = null;
 
 	/**
-	 * @param $handler
+	 * @param PushHandler $handler
 	 */
 	public function __construct(PushHandler $handler) {
 		$this->_handler = $handler;
 	}
 
 	/**
-	 * @param $name
-	 * @param $arguments
+	 * @param string $message
+	 * @param array $data (optional)
+	 */
+	public function send($message, $data = null) {
+		return $this->_handler->send($message, $data);
+	}
+
+	/**
+	 * wraps handler-methods, and returns $this
+	 * @param string $name
+	 * @param mixed $arguments
+	 * @return $this
 	 */
 	public function __call($name, $arguments) {
 

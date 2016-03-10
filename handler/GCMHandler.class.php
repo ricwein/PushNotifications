@@ -56,7 +56,7 @@ class GCMHandler extends PushHandler {
 		curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($fields));
 
 		// Avoids problem with https certificate
-		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, true);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
 
 		// Execute post
@@ -65,7 +65,7 @@ class GCMHandler extends PushHandler {
 		// Close connection
 		curl_close($curl);
 
-		return $result;
+		return @json_decode($result, true);
 	}
 
 }
