@@ -6,8 +6,8 @@ abstract class PushHandler {
 	 * @var array
 	 */
 	protected $_server = [
-		'key' => '',
-		'url' => '',
+		'token' => '',
+		'url'   => '',
 	];
 
 	/**
@@ -16,12 +16,12 @@ abstract class PushHandler {
 	protected $_devices = [];
 
 	/**
-	 * @param string $apiKey (optional)
+	 * @param string $serverToken (optional)
 	 * @param string $url (optional)
 	 */
-	public function __construct($apiKey = null, $url = null) {
-		if ($apiKey !== null) {
-			$this->setServerKey($apiKey);
+	public function __construct($serverToken = null, $url = null) {
+		if ($serverToken !== null) {
+			$this->setServerToken($serverToken);
 		}
 
 		if ($url !== null) {
@@ -38,10 +38,18 @@ abstract class PushHandler {
 	}
 
 	/**
-	 * @param string $apiKey
+	 * @param string $serverToken
 	 */
-	public function setServerKey($apiKey) {
-		$this->_server['key'] = $apiKey;
+	public function setServerToken($serverToken) {
+		$this->_server['token'] = $serverToken;
+		return $this;
+	}
+
+	/**
+	 * @param array $server
+	 */
+	public function setServer(array $server) {
+		$this->_server = array_merge($this->_server, $server);
 		return $this;
 	}
 

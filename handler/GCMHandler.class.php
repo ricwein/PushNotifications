@@ -8,8 +8,8 @@ class GCMHandler extends PushHandler {
 	 * @var string
 	 */
 	protected $_server = [
-		'key' => '',
-		'url' => 'https://gcm-http.googleapis.com/gcm/send',
+		'token' => '',
+		'url'   => 'https://gcm-http.googleapis.com/gcm/send',
 	];
 
 	/**
@@ -23,8 +23,8 @@ class GCMHandler extends PushHandler {
 			return false;
 		}
 
-		if (strlen($this->_server['key']) < 8) {
-			throw new Exception('API key not set', 500);
+		if (strlen($this->_server['token']) < 8) {
+			throw new Exception('API token not set', 500);
 		}
 
 		$fields = [
@@ -39,7 +39,7 @@ class GCMHandler extends PushHandler {
 		}
 
 		$headers = [
-			'Authorization: key=' . $this->_server['key'],
+			'Authorization: key=' . $this->_server['token'],
 			'Content-Type: application/json',
 		];
 
