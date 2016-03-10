@@ -36,7 +36,7 @@ class PushNotification {
 		if (method_exists($this->_handler, $name)) {
 			call_user_func_array([$this->_handler, $name], $arguments);
 		} else {
-			throw new Exception('unknown ' . $name . ' call in PushNotification', 500);
+			throw new Exception('unknown ' . $name . ' call for ' . get_class($this->_handler), 500);
 		}
 
 		return $this;

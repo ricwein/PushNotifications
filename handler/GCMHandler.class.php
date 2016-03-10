@@ -65,7 +65,8 @@ class GCMHandler extends PushHandler {
 		// Close connection
 		curl_close($curl);
 
-		return @json_decode($result, true);
+		$result = @json_decode($result, true);
+		return (isset($result['success']) && (int) $result['success'] === count($this->_devices));
 	}
 
 }

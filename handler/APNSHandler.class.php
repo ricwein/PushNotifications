@@ -9,7 +9,7 @@ class APNSHandler extends PushHandler {
 	 */
 	protected $_server = [
 		'token'      => '',
-		'url'        => 'ssl://gateway.push.apple.com:2195 ',
+		'url'        => 'ssl://gateway.push.apple.com:2195',
 		'passphrase' => null,
 	];
 
@@ -19,12 +19,13 @@ class APNSHandler extends PushHandler {
 	 * @return mixed
 	 */
 	public function send($message, $data = null) {
+		$result = true;
 
 		// generate payload
 		$payload = ['aps' => [
 			'alert' => stripslashes($message),
 			'badge' => 1,
-			'sound' => 'bingbong.aiff',
+			'sound' => 'default',
 		]];
 
 		if (is_array($data)) {
@@ -52,12 +53,16 @@ class APNSHandler extends PushHandler {
 		$payload = json_encode($payload);
 
 		foreach ($this->_devices as $device) {
-			$notification = chr(0) . pack('n', 32) . pack('H*', str_replace(' ', '', $device)) . pack('n', strlen($payload)) . $payload;
-			fwrite($stream, $notification);
+			$device = trim($device, '<>');
+			$device = str_replace(' ', '', $device);
+
+			$notification = chr(0) . pack('n', 32) . pack('H*', $device) . pack('n', strlen($payload)) . $payload;
+			$result       = $result && (bool) fwrite($stream, $notification);
 		}
 
 		fclose($stream);
 
+		return $result;
 	}
 
 }
