@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/handler/GCMHandler.class.php';
 require_once __DIR__ . '/handler/APNSHandler.class.php';
+require_once __DIR__ . '/handler/WNSHandler.class.php';
 
 class PushNotification {
 
