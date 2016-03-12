@@ -57,7 +57,7 @@ abstract class PushHandler {
 	 * @param mixed $device
 	 */
 	public function addDevice($device) {
-		$this->_devices = array_merge($this->_devices, (array) $device);
+		$this->_devices = array_merge($this->_devices, (array)$device);
 		return $this;
 	}
 

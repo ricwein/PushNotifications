@@ -17,7 +17,7 @@ class WNSHandler extends PushHandler {
 	 * @param $deviceID
 	 * @param $deviceSecret
 	 */
-	public function requestToken($deviceID, $deviceSecret) {
+	public function requestOAuthToken($clientID, $clientSecret) {
 		// init http-headers
 		$headers = [
 			'Content-Type: application/x-www-form-urlencoded',
@@ -41,7 +41,7 @@ class WNSHandler extends PushHandler {
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
 
 		// init payload
-		$payload = 'grant_type=client_credentials&client_id=' . $token . '&client_secret=' . $secret . '&scope=notify.windows.com';
+		$payload = 'grant_type=client_credentials&client_id=' . $clientID . '&client_secret=' . $clientSecret . '&scope=notify.windows.com';
 
 		// append payload
 		curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
@@ -147,13 +147,13 @@ class WNSHandler extends PushHandler {
 		// append payload
 		curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
 
-		foreach ($this->_devices as $key => $secret) {
+		foreach ($this->_devices as $clientID => $clientSecret) {
 
 			// request device-token if necessary
-			if (is_int($key)) {
-				$token = $secret;
+			if (is_int($clientID)) {
+				$token = $clientSecret;
 			} else {
-				$token = $this->requestToken($key, $secret);
+				$token = $this->requestOAuthToken($clientID, $clientSecret);
 			}
 
 			// init http-headers
