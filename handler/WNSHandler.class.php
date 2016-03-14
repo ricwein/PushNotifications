@@ -75,7 +75,7 @@ class WNSHandler extends PushHandler {
 	 * @param array $data
 	 */
 	protected static function _createPayload($message, array $data = null) {
-		if (isset($data['title']) && !isset($data['image'])) {
+		if (is_array($data) && isset($data['title']) && !isset($data['image'])) {
 			return '<?xml version="1.0" encoding="utf-8"?>' .
 				'<toast>' .
 				'<visual>' .
@@ -85,7 +85,7 @@ class WNSHandler extends PushHandler {
 				'</binding>' .
 				'</visual>' .
 				'</toast>';
-		} elseif (isset($data['title'])) {
+		} elseif (is_array($data) && isset($data['title'])) {
 			return '<?xml version="1.0" encoding="utf-8"?>' .
 				'<toast>' .
 				'<visual>' .
@@ -96,7 +96,7 @@ class WNSHandler extends PushHandler {
 				'</binding>' .
 				'</visual>' .
 				'</toast>';
-		} elseif (isset($data['image'])) {
+		} elseif (is_array($data) && isset($data['image'])) {
 			return '<?xml version="1.0" encoding="utf-8"?>' .
 				'<toast>' .
 				'<visual>' .
