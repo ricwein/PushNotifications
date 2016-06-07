@@ -1,6 +1,15 @@
 <?php
+/**
+ * @file   GCMHandler.php
+ * @brief  Handler for Google-Cloud-Messaging
+ *
+ * @author  Richard Weinhold
+ * @package  PushNotification
+ */
 
-require_once __DIR__ . '/../PushHandler.class.php';
+namespace PushNotification\Handler;
+
+use PushNotification\PushHandler;
 
 class GCMHandler extends PushHandler {
 
@@ -62,7 +71,7 @@ class GCMHandler extends PushHandler {
 		if ($result === false) {
 			$error = curl_error($curl);
 			curl_close($curl);
-			throw new Exception('error processing GCM: ' . $error, 500);
+			throw new \Exception('error processing GCM: ' . $error, 500);
 		}
 
 		// remeber to close the connection when finished

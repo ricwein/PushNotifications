@@ -1,4 +1,13 @@
 <?php
+/**
+ * @file   PushHandler.php
+ * @brief   abstract base-class for Push-Notification Handlers
+ *
+ * @author  Richard Weinhold
+ * @package  PushNotification
+ */
+
+namespace PushNotification;
 
 abstract class PushHandler {
 
@@ -57,7 +66,7 @@ abstract class PushHandler {
 	 * @param mixed $device
 	 */
 	public function addDevice($device) {
-		$this->_devices = array_merge($this->_devices, (array)$device);
+		$this->_devices = array_merge($this->_devices, (array) $device);
 		return $this;
 	}
 
@@ -65,9 +74,9 @@ abstract class PushHandler {
 		if (count($this->_devices) === 0) {
 			return false;
 		} elseif (empty($this->_server['token'])) {
-			throw new Exception('server token not set', 500);
+			throw new \Exception('server token not set', 500);
 		} elseif (empty($this->_server['url'])) {
-			throw new Exception('server url not set', 500);
+			throw new \Exception('server url not set', 500);
 		}
 
 		return true;

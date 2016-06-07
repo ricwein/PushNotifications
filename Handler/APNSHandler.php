@@ -1,6 +1,15 @@
 <?php
+/**
+ * @file   APNSHandler.php
+ * @brief  Handler for Apple-Push-Notifications
+ *
+ * @author  Richard Weinhold
+ * @package  PushNotification
+ */
 
-require_once __DIR__ . '/../PushHandler.class.php';
+namespace PushNotification\Handler;
+
+use PushNotification\PushHandler;
 
 class APNSHandler extends PushHandler {
 
@@ -39,7 +48,7 @@ class APNSHandler extends PushHandler {
 		// check and set cert-path
 		$certpath = realpath($this->_server['token']);
 		if (empty($certpath) || $certpath === DIRECTORY_SEPARATOR || !is_file($certpath)) {
-			throw new Exception('invalid cert-file: ' . $certpath, 500);
+			throw new \Exception('invalid cert-file: ' . $certpath, 500);
 		}
 		stream_context_set_option($ctx, 'ssl', 'local_cert', $certpath);
 
@@ -52,7 +61,7 @@ class APNSHandler extends PushHandler {
 		$stream = @stream_socket_client($this->_server['url'], $errno, $errstr, 60, STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT, $ctx);
 
 		if (!$stream) {
-			throw new Exception('error processing APNS [' . $errno . ']:' . $errstr, 500);
+			throw new \Exception('error processing APNS [' . $errno . ']:' . $errstr, 500);
 		}
 
 		$payload = json_encode($payload);

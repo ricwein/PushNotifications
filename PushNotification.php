@@ -1,8 +1,15 @@
 <?php
+/**
+ * @file   PushNotification.php
+ * @brief   Push-Notification Wrapper
+ *
+ * @author  Richard Weinhold
+ * @package  PushNotification
+ */
 
-require_once __DIR__ . '/handler/GCMHandler.class.php';
-require_once __DIR__ . '/handler/APNSHandler.class.php';
-require_once __DIR__ . '/handler/WNSHandler.class.php';
+namespace PushNotification;
+
+use PushNotification\PushHandler;
 
 class PushNotification {
 
@@ -41,7 +48,7 @@ class PushNotification {
 		if (method_exists($this->_handler, $name)) {
 			call_user_func_array([$this->_handler, $name], $arguments);
 		} else {
-			throw new Exception('unknown ' . $name . ' call for ' . get_class($this->_handler), 500);
+			throw new \Exception('unknown call to ' . get_class($this->_handler) . '->' . $name . '()', 500);
 		}
 
 		return $this;

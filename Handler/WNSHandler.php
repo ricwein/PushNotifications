@@ -1,6 +1,15 @@
 <?php
+/**
+ * @file   WSHandler.php
+ * @brief  Handler for Windows-Push-Notification-Services
+ *
+ * @author  Richard Weinhold
+ * @package  PushNotification
+ */
 
-require_once __DIR__ . '/../PushHandler.class.php';
+namespace PushNotification\Handler;
+
+use PushNotification\PushHandler;
 
 class WNSHandler extends PushHandler {
 
@@ -52,7 +61,7 @@ class WNSHandler extends PushHandler {
 		if ($result === false) {
 			$error = curl_error($curl);
 			curl_close($curl);
-			throw new Exception('error processing WPN: ' . $error, 500);
+			throw new \Exception('error processing WPN: ' . $error, 500);
 		}
 
 		$result = json_decode($result);
@@ -62,9 +71,9 @@ class WNSHandler extends PushHandler {
 
 		// handle errors
 		if (isset($output->error)) {
-			throw new Exception($output->error_description, 500);
+			throw new \Exception($output->error_description, 500);
 		} elseif (!isset($result->access_token)) {
-			throw new Exception('access_token not found', 500);
+			throw new \Exception('access_token not found', 500);
 		}
 
 		return $result->access_token;
@@ -173,7 +182,7 @@ class WNSHandler extends PushHandler {
 
 			// send request
 			if (curl_exec($curl) === false) {
-				throw new Exception('error processing WPN: ' . curl_error($curl), 500);
+				throw new \Exception('error processing WPN: ' . curl_error($curl), 500);
 			}
 
 			$response = curl_getinfo($curl);
