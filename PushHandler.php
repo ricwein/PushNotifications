@@ -20,11 +20,6 @@ abstract class PushHandler {
 	];
 
 	/**
-	 * @var array
-	 */
-	protected $_devices = [];
-
-	/**
 	 * @param string $serverToken (optional)
 	 * @param string $url (optional)
 	 */
@@ -62,18 +57,8 @@ abstract class PushHandler {
 		return $this;
 	}
 
-	/**
-	 * @param mixed $device
-	 */
-	public function addDevice($device) {
-		$this->_devices = array_merge($this->_devices, (array) $device);
-		return $this;
-	}
-
 	public function prepare() {
-		if (count($this->_devices) === 0) {
-			return false;
-		} elseif (empty($this->_server['token'])) {
+		if (empty($this->_server['token'])) {
 			throw new \Exception('server token not set', 500);
 		} elseif (empty($this->_server['url'])) {
 			throw new \Exception('server url not set', 500);
@@ -83,9 +68,11 @@ abstract class PushHandler {
 	}
 
 	/**
+	 * build payload and send via push-handler to servers
 	 * @param string $message
-	 * @param array $data
+	 * @param array $devices
+	 * @param array $data (optional)
 	 * @return bool
 	 */
-	abstract public function send($message, array $data = null);
+	abstract public function send($message, array $devices, array $data = null);
 }

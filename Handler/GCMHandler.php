@@ -22,15 +22,17 @@ class GCMHandler extends PushHandler {
 	];
 
 	/**
+	 * send notification to Googles GCM servers
 	 * @param string $message
-	 * @param array $data
+	 * @param array $devices
+	 * @param array $data (optional)
 	 * @return bool
 	 */
-	public function send($message, array $data = null) {
+	public function send($message, array $devices, array $data = null) {
 
 		// init payload
 		$payload = [
-			'registration_ids' => $this->_devices,
+			'registration_ids' => $devices,
 			'data'             => ['message' => $message],
 		];
 
@@ -79,7 +81,7 @@ class GCMHandler extends PushHandler {
 
 		// decode response and check if sending to all devices succeeded
 		$result = @json_decode($result, true);
-		return (isset($result['success']) && (int) $result['success'] === count($this->_devices));
+		return (isset($result['success']) && (int) $result['success'] === count($devices));
 	}
 
 }

@@ -23,11 +23,13 @@ class APNSHandler extends PushHandler {
 	];
 
 	/**
+	 * send notification to Apples APNS servers
 	 * @param string $message
-	 * @param array $data
+	 * @param array $devices
+	 * @param array $data (optional)
 	 * @return bool
 	 */
-	public function send($message, array $data = null) {
+	public function send($message, array $devices, array $data = null) {
 		$result = true;
 
 		// init payload
@@ -67,7 +69,7 @@ class APNSHandler extends PushHandler {
 		$payload = json_encode($payload);
 
 		// create and write notification for each single device
-		foreach ($this->_devices as $device) {
+		foreach ($devices as $device) {
 
 			// cleanup device tokens
 			$device = trim($device, '<>');

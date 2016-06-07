@@ -127,11 +127,13 @@ class WNSHandler extends PushHandler {
 		}}
 
 	/**
+	 * send notification to Microsofts live.com WNS servers
 	 * @param string $message
-	 * @param array $data
+	 * @param array $devices
+	 * @param array $data (optional)
 	 * @return bool
 	 */
-	public function send($message, array $data = null) {
+	public function send($message, array $devices, array $data = null) {
 		$result = true;
 
 		// init payload
@@ -156,7 +158,7 @@ class WNSHandler extends PushHandler {
 		// append payload
 		curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
 
-		foreach ($this->_devices as $clientID => $clientSecret) {
+		foreach ($devices as $clientID => $clientSecret) {
 
 			// request device-token if necessary
 			if (is_int($clientID)) {
