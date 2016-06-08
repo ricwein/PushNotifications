@@ -29,14 +29,14 @@ abstract class PushHandler {
 		}
 
 		if ($url !== null) {
-			$this->setUrl($url);
+			$this->setServerUrl($url);
 		}
 	}
 
 	/**
 	 * @param string $url
 	 */
-	public function setUrl($url) {
+	public function setServerUrl($url) {
 		$this->_server['url'] = $url;
 		return $this;
 	}
