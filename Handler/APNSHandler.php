@@ -39,6 +39,26 @@ class APNSHandler extends PushHandler {
 			'sound' => 'default',
 		]];
 
+		// default arbitrary settings
+		$arbitrary = [
+			'expire'    => 0,
+			'messageID' => 0,
+			'priority'  => 10,
+			'command'   => 1,
+		];
+
+		// handle arbitrary settings
+		foreach (['expire', 'messageID', 'priority', 'command'] as $key) {
+
+			if (isset($data[$key])) {
+				$arbitrary[$key] = (int) abs($data[$key]);
+				unset($data[$key]);
+			} elseif (isset($this->_server[$key])) {
+				$arbitrary[$key] = (int) abs($this->_server[$key]);
+			}
+
+		}
+
 		// apply additional data to payload
 		if (is_array($data)) {
 			$payload['aps'] = array_merge($payload['aps'], $data);
@@ -71,12 +91,8 @@ class APNSHandler extends PushHandler {
 		// create and write notification for each single device
 		foreach ($devices as $device) {
 
-			// cleanup device tokens
-			$device = trim($device, '<>');
-			$device = str_replace(' ', '', $device);
-
-			// convert hex-tokens into binary
-			$notification = chr(0) . pack('n', 32) . pack('H*', $device) . pack('n', strlen($payload)) . $payload;
+			// build binary notification
+			$notification = $this->_buildNotification($device, $payload, $arbitrary, $arbitrary['command']);
 
 			// write into stream and apply result onto previous results
 			$result = $result && (bool) fwrite($stream, $notification);
@@ -86,6 +102,65 @@ class APNSHandler extends PushHandler {
 		@fclose($stream);
 
 		return $result;
+	}
+
+}
+
+/**
+ * build binary notification-package
+ * @param string $device
+ * @param string $payload json
+ * @param int $expiration (optional)
+ * @param array $arbitrary additional settings
+ * @param int $version push-version (1/2)
+ * @return string
+ */
+protected function _buildNotification($deviceToken, $payload, array $arbitrary = [], $version = 1) {
+	$tokenLength = 32;
+
+	// cleanup device tokens
+	$deviceToken = str_replace(' ', '', trim($deviceToken, '<> '));
+
+	// build notification
+	if ((int) $version === 1) {
+
+		$notification = pack('C', 1); // Command 1
+		$notification .= pack('N', (int) $arbitrary['messageID']); // notification id
+		$notification .= pack('N', ($arbitrary['expire'] > 0 ? time() + $arbitrary['expire'] : 0)); // expiration timestamps
+		$notification .= pack('n', $tokenLength); // token length
+		$notification .= pack('H*', $deviceToken); // device-token
+		$notification .= pack('n', strlen($payload)); // payload-length
+		$notification .= $payload; // payload
+
+		return $notification;
+	} elseif ((int) $version === 2) {
+
+		if (!isset($arbitrary['priority']) || !is_int($arbitrary['priority'])) {
+			$arbitrary['priority'] = 10;
+		}
+
+		// build notification first
+		$notification = pack('C', 1); // head
+		$notification .= pack('n', $tokenLength); // token length
+		$notification .= pack('H*', $deviceToken); // device-token
+		$notification .= pack('C', 2);
+		$notification .= pack('n', strlen($payload)); // payload-length
+		$notification .= pack('A*', $payload); // payload
+		$notification .= pack('Cn', 3, 4);
+		$notification .= pack('N', (int) $arbitrary['messageID']); // notification id
+		$notification .= pack('Cn', 4, 4);
+		$notification .= pack('N', ($arbitrary['expire'] > 0 ? time() + $arbitrary['expire'] : 0)); // expiration timestamps
+		$notification .= pack('Cn', 5, 1);
+		$notification .= pack('C', (int) $arbitrary['priority']); // notification priority
+
+		// pack notification into frame
+		$frame = pack('C', 2); // Command 2
+		$frame .= pack('N', strlen($notification)); // notification length
+		$frame .= $notification; // notification
+
+		return $frame;
+	} else {
+		throw new \Exception('unknown Command version', 500);
 	}
 
 }
