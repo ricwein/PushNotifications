@@ -25,35 +25,30 @@ class APNSHandler extends PushHandler {
 	/**
 	 * send notification to Apples APNS servers
 	 * @param string $message
+	 * @param array $payload (optional)
 	 * @param array $devices
-	 * @param array $data (optional)
 	 * @return bool
 	 */
-	public function send($message, array $devices, array $data = null) {
+	public function send($message, array $payload = [], array $devices) {
 		$result    = true;
 		$arbitrary = ['command' => 1];
 
-		// init payload
-		$payload = ['aps' => [
-			'alert' => stripslashes($message),
-			'badge' => 1,
-			'sound' => 'default',
-		]];
-
 		// handle arbitrary settings
 		foreach (['expire', 'messageID', 'priority', 'command'] as $key) {
-			if (isset($data[$key])) {
-				$arbitrary[$key] = (int) abs($data[$key]);
-				unset($data[$key]);
+			if (isset($payload[$key])) {
+				$arbitrary[$key] = (int) abs($payload[$key]);
+				unset($payload[$key]);
 			} elseif (isset($this->_server[$key])) {
 				$arbitrary[$key] = (int) abs($this->_server[$key]);
 			}
 		}
 
-		// apply additional data to payload
-		if (is_array($data)) {
-			$payload['aps'] = array_merge($payload['aps'], $data);
-		}
+		// build payload
+		$payload = array_merge(['aps' => [
+			'alert' => trim(stripslashes($message)),
+			'badge' => 1,
+			'sound' => 'default',
+		]], $payload);
 
 		// open context
 		$ctx = stream_context_create();

@@ -47,11 +47,11 @@ class PushNotification {
 	 * @param array $payload (optional)
 	 * @return bool
 	 */
-	public function send($message, array $payload = null) {
+	public function send($message, array $payload = []) {
 		if (!$this->_prepare()) {
 			return false;
 		}
-		return $this->_handler->send($message, $this->_devices, $payload);
+		return $this->_handler->send($message, $payload, $this->_devices);
 	}
 
 	protected function _prepare() {

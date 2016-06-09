@@ -83,35 +83,35 @@ class WNSHandler extends PushHandler {
 	 * @param $message
 	 * @param array $data
 	 */
-	protected static function _createPayload($message, array $data = null) {
-		if (is_array($data) && isset($data['title']) && !isset($data['image'])) {
+	protected static function _buildPayload($message, array $data = []) {
+		if (isset($data['title']) && !isset($data['image'])) {
 			return '<?xml version="1.0" encoding="utf-8"?>' .
 				'<toast>' .
 				'<visual>' .
 				'<binding template="ToastText02">' .
-				'<text id="1">' . $messages . '</text>' .
+				'<text id="1">' . $message . '</text>' .
 				'<text id="2">' . $data['title'] . '</text>' .
 				'</binding>' .
 				'</visual>' .
 				'</toast>';
-		} elseif (is_array($data) && isset($data['title'])) {
+		} elseif (isset($data['title'])) {
 			return '<?xml version="1.0" encoding="utf-8"?>' .
 				'<toast>' .
 				'<visual>' .
 				'<binding template="ToastImageAndText02">' .
 				'<image id="1" src="' . $data['image'] . '" alt="' . $data['image'] . '"/>' .
-				'<text id="1">' . $messages . '</text>' .
+				'<text id="1">' . $message . '</text>' .
 				'<text id="2">' . $data['title'] . '</text>' .
 				'</binding>' .
 				'</visual>' .
 				'</toast>';
-		} elseif (is_array($data) && isset($data['image'])) {
+		} elseif (isset($data['image'])) {
 			return '<?xml version="1.0" encoding="utf-8"?>' .
 				'<toast>' .
 				'<visual>' .
 				'<binding template="ToastImageAndText01">' .
 				'<image id="1" src="' . $data['image'] . '" alt="' . $data['image'] . '"/>' .
-				'<text id="1">' . $messages . '</text>' .
+				'<text id="1">' . $message . '</text>' .
 				'</binding>' .
 				'</visual>' .
 				'</toast>';
@@ -120,7 +120,7 @@ class WNSHandler extends PushHandler {
 				'<toast>' .
 				'<visual>' .
 				'<binding template="ToastText01">' .
-				'<text id="1">' . $messages . '</text>' .
+				'<text id="1">' . $message . '</text>' .
 				'</binding>' .
 				'</visual>' .
 				'</toast>';
@@ -129,15 +129,15 @@ class WNSHandler extends PushHandler {
 	/**
 	 * send notification to Microsofts live.com WNS servers
 	 * @param string $message
+	 * @param array $payload (optional)
 	 * @param array $devices
-	 * @param array $data (optional)
 	 * @return bool
 	 */
-	public function send($message, array $devices, array $data = null) {
+	public function send($message, array $payload = [], array $devices) {
 		$result = true;
 
-		// init payload
-		$payload = static::_createPayload($message, $data);
+		// buil xml-payload
+		$xml = static::_buildPayload($message, $payload);
 
 		// open curl connection
 		$curl = curl_init();
@@ -156,7 +156,7 @@ class WNSHandler extends PushHandler {
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
 
 		// append payload
-		curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
+		curl_setopt($curl, CURLOPT_POSTFIELDS, $xml);
 
 		foreach ($devices as $clientID => $clientSecret) {
 
@@ -171,12 +171,12 @@ class WNSHandler extends PushHandler {
 			$headers = [
 				'Authorization: Bearer ' . $token,
 				'Content-Type: text/xml',
-				'Content-Length: ' . strlen($payload),
+				'Content-Length: ' . strlen($xml),
 				'X-WNS-Type: wns/toast',
 			];
 
-			if (isset($data['tag'])) {
-				$headers[] = 'X-WNS-Tag: ' . $data['tag'];
+			if (isset($payload['tag'])) {
+				$headers[] = 'X-WNS-Tag: ' . $payload['tag'];
 			}
 
 			// apply headers

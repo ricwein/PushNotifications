@@ -113,7 +113,7 @@ They're all extending `PushNotification\PushHandler`
 
 Since all push-settings are push-handler specific, the according handler has to been added to the PushNotification class before applying the configuration at the PushNotification.
 
-Settings like *server-token* and *server-url* can be set  like:
+Settings as *server-token* and *server-url* can be set like:
 
 ```php
 <?php
@@ -183,7 +183,7 @@ $push->addDevice([
 
 ### sending ###
 
-Sending a messages is simple as that:
+Sending a messages is as simple as that:
 
 ```php
 <?php

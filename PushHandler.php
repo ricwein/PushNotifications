@@ -74,5 +74,5 @@ abstract class PushHandler {
 	 * @param array $data (optional)
 	 * @return bool
 	 */
-	abstract public function send($message, array $devices, array $data = null);
+	abstract public function send($message, array $data = [], array $devices);
 }

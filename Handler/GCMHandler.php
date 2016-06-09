@@ -24,22 +24,19 @@ class GCMHandler extends PushHandler {
 	/**
 	 * send notification to Googles GCM servers
 	 * @param string $message
+	 * @param array $payload (optional)
 	 * @param array $devices
-	 * @param array $data (optional)
 	 * @return bool
 	 */
-	public function send($message, array $devices, array $data = null) {
+	public function send($message, array $payload = [], array $devices) {
 
-		// init payload
+		// build payload
 		$payload = [
 			'registration_ids' => $devices,
-			'data'             => ['message' => $message],
+			'data'             => array_merge([
+				'message' => $message,
+			], $payload),
 		];
-
-		// apply additional data to payload
-		if (is_array($data)) {
-			$payload['data'] = array_merge($payload['data'], $data);
-		}
 
 		// init http-headers
 		$headers = [
