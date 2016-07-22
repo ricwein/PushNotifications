@@ -10,7 +10,7 @@ Examples:
 ```php
 <?php
 
-use PushNotification\Handler\APNSHandler;
+use PushNotification\PushNotification;
 use PushNotification\Handler\GCMHandler;
 
 $push = new PushNotification(new GCMHandler());
@@ -27,8 +27,8 @@ $push->send('message', ['payload' => 'data']);
 ```php
 <?php
 
-use PushNotification\Handler\GCMHandler;
-use PushNotification\Handler\GCMHandler;
+use PushNotification\PushNotification;
+use PushNotification\Handler\APNSHandler;
 
 $push = new PushNotification(new APNSHandler());
 $push->setServer([
@@ -47,8 +47,8 @@ $push->send('message', ['payload' => 'data']);
 ```php
 <?php
 
-use PushNotification\Handler\WNSHandler;
 use PushNotification\PushNotification;
+use PushNotification\Handler\WNSHandler;
 
 $push = new PushNotification(new WNSHandler());
 $push->setServer([
@@ -78,7 +78,7 @@ It's possible to init the PushNotification class with a specific push-handler:
 <?php
 
 use PushNotification\PushNotification;
-use PushNotification\PushNotification;
+use PushNotification\Handler\GCMHandler;
 
 $push = new PushNotification(new GCMHandler());
 
@@ -91,7 +91,7 @@ or without, and adding the push-handler later:
 <?php
 
 use PushNotification\PushNotification;
-use PushNotification\PushNotification;
+use PushNotification\Handler\GCMHandler;
 
 $push        = new PushNotification();
 $pushHandler = new GCMHandler();
