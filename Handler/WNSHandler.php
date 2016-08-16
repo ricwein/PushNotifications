@@ -1,8 +1,5 @@
 <?php
 /**
- * @file   WSHandler.php
- * @brief  Handler for Windows-Push-Notification-Services
- *
  * @author  Richard Weinhold
  * @package  PushNotification
  */

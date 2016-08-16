@@ -1,8 +1,5 @@
 <?php
 /**
- * @file   PushHandler.php
- * @brief   abstract base-class for Push-Notification Handlers
- *
  * @author  Richard Weinhold
  * @package  PushNotification
  */

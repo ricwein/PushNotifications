@@ -1,8 +1,5 @@
 <?php
 /**
- * @file   APNSHandler.php
- * @brief  Handler for Apple-Push-Notifications
- *
  * @author  Richard Weinhold
  * @package  PushNotification
  */

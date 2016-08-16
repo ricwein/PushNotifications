@@ -1,8 +1,5 @@
 <?php
 /**
- * @file   GCMHandler.php
- * @brief  Handler for Google-Cloud-Messaging
- *
  * @author  Richard Weinhold
  * @package  PushNotification
  */

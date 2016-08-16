@@ -1,8 +1,5 @@
 <?php
 /**
- * @file   PushNotification.php
- * @brief   Push-Notification Wrapper
- *
  * @author  Richard Weinhold
  * @package  PushNotification
  */
