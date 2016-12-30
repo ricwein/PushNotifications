@@ -1,12 +1,11 @@
 <?php
 /**
- * @author  Richard Weinhold
- * @package  PushNotification
+ * @author Richard Weinhold
  */
 
-namespace PushNotification;
+namespace ricwein\PushNotification;
 
-use PushNotification\PushHandler;
+use ricwein\PushNotification\PushHandler;
 
 class PushNotification {
 

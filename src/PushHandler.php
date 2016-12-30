@@ -1,10 +1,9 @@
 <?php
 /**
- * @author  Richard Weinhold
- * @package  PushNotification
+ * @author Richard Weinhold
  */
 
-namespace PushNotification;
+namespace ricwein\PushNotification;
 
 abstract class PushHandler {
 
@@ -56,9 +55,9 @@ abstract class PushHandler {
 
 	public function prepare() {
 		if (empty($this->_server['token'])) {
-			throw new \Exception('server token not set', 500);
+			throw new \UnexpectedValueException('server token not set', 500);
 		} elseif (empty($this->_server['url'])) {
-			throw new \Exception('server url not set', 500);
+			throw new \UnexpectedValueException('server url not set', 500);
 		}
 
 		return true;

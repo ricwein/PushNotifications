@@ -10,8 +10,8 @@ Examples:
 ```php
 <?php
 
-use PushNotification\PushNotification;
-use PushNotification\Handler\GCMHandler;
+use ricwein\PushNotification\PushNotification;
+use ricwein\PushNotification\Handler\GCMHandler;
 
 $push = new PushNotification(new GCMHandler());
 $push->setServerToken('ExampleGooglePushToken12345678987654321');
@@ -27,8 +27,8 @@ $push->send('message', ['payload' => 'data']);
 ```php
 <?php
 
-use PushNotification\PushNotification;
-use PushNotification\Handler\APNSHandler;
+use ricwein\PushNotification\PushNotification;
+use ricwein\PushNotification\Handler\APNSHandler;
 
 $push = new PushNotification(new APNSHandler());
 $push->setServer([
@@ -47,8 +47,8 @@ $push->send('message', ['payload' => 'data']);
 ```php
 <?php
 
-use PushNotification\PushNotification;
-use PushNotification\Handler\WNSHandler;
+use ricwein\PushNotification\PushNotification;
+use ricwein\PushNotification\Handler\WNSHandler;
 
 $push = new PushNotification(new WNSHandler());
 $push->setServer([
@@ -77,8 +77,8 @@ It's possible to init the PushNotification class with a specific push-handler:
 ```php
 <?php
 
-use PushNotification\PushNotification;
-use PushNotification\Handler\GCMHandler;
+use ricwein\PushNotification\PushNotification;
+use ricwein\PushNotification\Handler\GCMHandler;
 
 $push = new PushNotification(new GCMHandler());
 
@@ -90,8 +90,8 @@ or without, and adding the push-handler later:
 ```php
 <?php
 
-use PushNotification\PushNotification;
-use PushNotification\Handler\GCMHandler;
+use ricwein\PushNotification\PushNotification;
+use ricwein\PushNotification\Handler\GCMHandler;
 
 $push        = new PushNotification();
 $pushHandler = new GCMHandler();

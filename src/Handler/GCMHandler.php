@@ -1,12 +1,11 @@
 <?php
 /**
- * @author  Richard Weinhold
- * @package  PushNotification
+ * @author Richard Weinhold
  */
 
-namespace PushNotification\Handler;
+namespace ricwein\PushNotification\Handler;
 
-use PushNotification\PushHandler;
+use ricwein\PushNotification\PushHandler;
 
 class GCMHandler extends PushHandler {
 
@@ -67,7 +66,7 @@ class GCMHandler extends PushHandler {
 		if ($result === false) {
 			$error = curl_error($curl);
 			curl_close($curl);
-			throw new \Exception('error processing GCM: ' . $error, 500);
+			throw new \RuntimeException('error processing GCM: ' . $error, 500);
 		}
 
 		// remeber to close the connection when finished

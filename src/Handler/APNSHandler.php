@@ -1,12 +1,11 @@
 <?php
 /**
- * @author  Richard Weinhold
- * @package  PushNotification
+ * @author Richard Weinhold
  */
 
-namespace PushNotification\Handler;
+namespace ricwein\PushNotification\Handler;
 
-use PushNotification\PushHandler;
+use ricwein\PushNotification\PushHandler;
 
 class APNSHandler extends PushHandler {
 
@@ -53,7 +52,7 @@ class APNSHandler extends PushHandler {
 		// check and set cert-path
 		$certpath = realpath($this->_server['token']);
 		if (empty($certpath) || $certpath === DIRECTORY_SEPARATOR || !is_file($certpath)) {
-			throw new \Exception('Invalid cert-file: ' . $certpath, 500);
+			throw new \UnexpectedValueException('Invalid cert-file: ' . $certpath, 500);
 		}
 		stream_context_set_option($ctx, 'ssl', 'local_cert', $certpath);
 
@@ -66,7 +65,7 @@ class APNSHandler extends PushHandler {
 		$stream = @stream_socket_client($this->_server['url'], $errno, $errstr, 60, STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT, $ctx);
 
 		if (!$stream) {
-			throw new \Exception('Error connecting to APNS-Server [' . $errno . ']: ' . $errstr, 500);
+			throw new \RuntimeException('Error connecting to APNS-Server [' . $errno . ']: ' . $errstr, 500);
 		}
 
 		$payload = json_encode($payload);
@@ -134,7 +133,7 @@ class APNSHandler extends PushHandler {
 			return $frame;
 		}
 
-		throw new \Exception('Unknown Command Version', 500);
+		throw new \UnexpectedValueException('Unknown Command Version', 500);
 	}
 
 }

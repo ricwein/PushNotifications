@@ -1,12 +1,11 @@
 <?php
 /**
- * @author  Richard Weinhold
- * @package  PushNotification
+ * @author Richard Weinhold
  */
 
-namespace PushNotification\Handler;
+namespace ricwein\PushNotification\Handler;
 
-use PushNotification\PushHandler;
+use ricwein\PushNotification\PushHandler;
 
 class WNSHandler extends PushHandler {
 
@@ -181,7 +180,9 @@ class WNSHandler extends PushHandler {
 
 			// send request
 			if (curl_exec($curl) === false) {
-				throw new \Exception('error processing WPN: ' . curl_error($curl), 500);
+				$error = curl_error($curl);
+				curl_close($curl);
+				throw new \RuntimeException('error processing WPN: ' . $error, 500);
 			}
 
 			$response = curl_getinfo($curl);
