@@ -7,6 +7,9 @@ namespace ricwein\PushNotification\Handler;
 
 use ricwein\PushNotification\PushHandler;
 
+/**
+ * PushHandler for Google Cloud Messaging
+ */
 class GCMHandler extends PushHandler {
 
 	/**
@@ -20,7 +23,7 @@ class GCMHandler extends PushHandler {
 	/**
 	 * send notification to Googles GCM servers
 	 * @param string $message
-	 * @param array $payload (optional)
+	 * @param array $payload
 	 * @param array $devices
 	 * @return bool
 	 */
@@ -28,11 +31,26 @@ class GCMHandler extends PushHandler {
 
 		// build payload
 		$payload = [
-			'registration_ids' => $devices,
-			'data'             => array_merge([
-				'message' => $message,
+			'data' => array_merge([
+				'message' => trim(stripslashes($message)),
 			], $payload),
 		];
+
+		return $this->sendRaw($payload, $devices);
+	}
+
+	/**
+	 * build and send Notification from raw payload
+	 * @param  array $payload
+	 * @param  array $devices
+	 * @return bool
+	 * @throws \RuntimeException
+	 */
+	public function sendRaw(array $payload, array $devices) {
+
+		$payload = array_merge([
+			'registration_ids' => $devices,
+		], $payload);
 
 		// init http-headers
 		$headers = [
@@ -75,6 +93,7 @@ class GCMHandler extends PushHandler {
 		// decode response and check if sending to all devices succeeded
 		$result = @json_decode($result, true);
 		return (isset($result['success']) && (int) $result['success'] === count($devices));
+
 	}
 
 }

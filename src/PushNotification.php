@@ -7,6 +7,9 @@ namespace ricwein\PushNotification;
 
 use ricwein\PushNotification\PushHandler;
 
+/**
+ * PushNotification core
+ */
 class PushNotification {
 
 	/**
@@ -20,7 +23,7 @@ class PushNotification {
 	protected $_devices = [];
 
 	/**
-	 * @param PushHandler $handler (optional)
+	 * @param PushHandler $handler
 	 */
 	public function __construct(PushHandler $handler = null) {
 		if ($handler !== null) {
@@ -38,9 +41,9 @@ class PushNotification {
 	}
 
 	/**
-	 * build payload and send via push-handler to servers
+	 * build payload and send via PushHandler to servers
 	 * @param string $message
-	 * @param array $payload (optional)
+	 * @param array $payload
 	 * @return bool
 	 */
 	public function send($message, array $payload = []) {
@@ -50,6 +53,22 @@ class PushNotification {
 		return $this->_handler->send($message, $payload, $this->_devices);
 	}
 
+	/**
+	 * send raw payload via PushHandler to servers
+	 * @param array $payload
+	 * @return bool
+	 */
+	public function sendRaw(array $payload = []) {
+		if (!$this->_prepare()) {
+			return false;
+		}
+		return $this->_handler->sendRaw($payload, $this->_devices);
+	}
+
+	/**
+	 * prepare PushHandler for sending
+	 * @return bool
+	 */
 	protected function _prepare() {
 		if (count($this->_devices) === 0) {
 			return false;
@@ -73,6 +92,7 @@ class PushNotification {
 	 * @param string $name
 	 * @param mixed $arguments
 	 * @return $this
+	 * @throws \Exception
 	 */
 	public function __call($name, $arguments) {
 

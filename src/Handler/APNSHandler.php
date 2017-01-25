@@ -7,6 +7,9 @@ namespace ricwein\PushNotification\Handler;
 
 use ricwein\PushNotification\PushHandler;
 
+/**
+ * PushHandler for Apple Push Notification Service
+ */
 class APNSHandler extends PushHandler {
 
 	/**
@@ -19,81 +22,13 @@ class APNSHandler extends PushHandler {
 	];
 
 	/**
-	 * send notification to Apples APNS servers
-	 * @param string $message
-	 * @param array $payload (optional)
-	 * @param array $devices
-	 * @return bool
-	 */
-	public function send($message, array $payload = [], array $devices) {
-		$result    = true;
-		$arbitrary = ['command' => 1];
-
-		// handle arbitrary settings
-		foreach (['expire', 'messageID', 'priority', 'command'] as $key) {
-			if (isset($payload[$key])) {
-				$arbitrary[$key] = (int) abs($payload[$key]);
-				unset($payload[$key]);
-			} elseif (isset($this->_server[$key])) {
-				$arbitrary[$key] = (int) abs($this->_server[$key]);
-			}
-		}
-
-		// build payload
-		$payload = array_merge(['aps' => [
-			'alert' => trim(stripslashes($message)),
-			'badge' => 1,
-			'sound' => 'default',
-		]], $payload);
-
-		// open context
-		$ctx = stream_context_create();
-
-		// check and set cert-path
-		$certpath = realpath($this->_server['token']);
-		if (empty($certpath) || $certpath === DIRECTORY_SEPARATOR || !is_file($certpath)) {
-			throw new \UnexpectedValueException('Invalid cert-file: ' . $certpath, 500);
-		}
-		stream_context_set_option($ctx, 'ssl', 'local_cert', $certpath);
-
-		// set cert passphrase if given
-		if ($this->_server['passphrase'] !== null) {
-			stream_context_set_option($ctx, 'ssl', 'passphrase', $this->_server['passphrase']);
-		}
-
-		// open tcp-stream to server
-		$stream = @stream_socket_client($this->_server['url'], $errno, $errstr, 60, STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT, $ctx);
-
-		if (!$stream) {
-			throw new \RuntimeException('Error connecting to APNS-Server [' . $errno . ']: ' . $errstr, 500);
-		}
-
-		$payload = json_encode($payload);
-
-		// create and write notification for each single device
-		foreach ($devices as $device) {
-
-			// build binary notification
-			$notification = $this->_buildNotification($device, $payload, $arbitrary, $arbitrary['command']);
-
-			// write into stream and apply result onto previous results
-			$result = $result && (bool) fwrite($stream, $notification);
-		}
-
-		// remeber to close the stream when finished
-		@fclose($stream);
-
-		return $result;
-	}
-
-	/**
 	 * build binary notification-package
-	 * @param string $device
+	 * @param string $deviceToken
 	 * @param string $payload json
-	 * @param int $expiration (optional)
 	 * @param array $arbitrary additional settings
 	 * @param int $version push-version (1/2)
 	 * @return string
+	 * @throws \UnexpectedValueException
 	 */
 	protected function _buildNotification($deviceToken, $payload, array $arbitrary = [], $version = 1) {
 
@@ -134,6 +69,93 @@ class APNSHandler extends PushHandler {
 		}
 
 		throw new \UnexpectedValueException('Unknown Command Version', 500);
+	}
+
+	/**
+	 * send notification to Apples APNS servers
+	 * @param string $message
+	 * @param array $payload
+	 * @param array $devices
+	 * @return bool
+	 * @throws \UnexpectedValueException|\RuntimeException
+	 */
+	public function send($message, array $payload = [], array $devices) {
+
+		// build payload
+		$payload = array_merge(['aps' => [
+			'alert' => trim(stripslashes($message)),
+			'badge' => 1,
+			'sound' => 'default',
+		]], $payload);
+
+		return $this->sendRaw($payload, $devices);
+	}
+
+	/**
+	 * build and send Notification from raw payload
+	 * @param  array $payload
+	 * @param  array $devices
+	 * @return bool
+	 * @throws \UnexpectedValueException|\RuntimeException
+	 */
+	public function sendRaw(array $payload, array $devices) {
+
+		// set default values
+		$result    = true;
+		$arbitrary = ['command' => 1];
+
+		// extract arbitrary settings
+		foreach (['expire', 'messageID', 'priority', 'command'] as $key) {
+			if (isset($payload[$key])) {
+				$arbitrary[$key] = (int) abs($payload[$key]);
+				unset($payload[$key]);
+			} elseif (isset($this->_server[$key])) {
+				$arbitrary[$key] = (int) abs($this->_server[$key]);
+			}
+		}
+
+		// open context
+		$ctx = stream_context_create();
+
+		// check and set cert-path
+		$certpath = realpath($this->_server['token']);
+		if (empty($certpath) || $certpath === DIRECTORY_SEPARATOR || !is_file($certpath)) {
+			throw new \UnexpectedValueException('Invalid cert-file: ' . $certpath, 500);
+		}
+
+		if (!stream_context_set_option($ctx, 'ssl', 'local_cert', $certpath)) {
+			throw new \UnexpectedValueException('unable to set cert-file', 500);
+		}
+
+		// set cert passphrase if given
+		if ($this->_server['passphrase'] !== null) {
+			stream_context_set_option($ctx, 'ssl', 'passphrase', $this->_server['passphrase']);
+		}
+
+		// open tcp-stream to server
+		$stream = @stream_socket_client($this->_server['url'], $errno, $errstr, 60, STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT, $ctx);
+
+		if (!$stream) {
+			throw new \RuntimeException('Error connecting to APNS-Server [' . $errno . ']: ' . $errstr, 500);
+		}
+
+		$payload = json_encode($payload);
+
+		// create and write notification for each single device
+		foreach ($devices as $device) {
+
+			// build binary notification
+			$notification = $this->_buildNotification($device, $payload, $arbitrary, $arbitrary['command']);
+
+			// write into stream and apply result onto previous results
+			$result = $result && (bool) fwrite($stream, $notification);
+		}
+
+		// remeber to close the stream when finished
+		@fclose($stream);
+
+		return $result;
+
 	}
 
 }

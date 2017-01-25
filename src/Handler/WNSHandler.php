@@ -7,6 +7,9 @@ namespace ricwein\PushNotification\Handler;
 
 use ricwein\PushNotification\PushHandler;
 
+/**
+ * PushHandler for Windows push Notification Services
+ */
 class WNSHandler extends PushHandler {
 
 	/**
@@ -19,8 +22,10 @@ class WNSHandler extends PushHandler {
 	];
 
 	/**
-	 * @param $deviceID
-	 * @param $deviceSecret
+	 * @param int $clientID
+	 * @param string $clientSecret
+	 * @return string
+	 * @throws \Exception
 	 */
 	public function requestOAuthToken($clientID, $clientSecret) {
 		// init http-headers
@@ -76,10 +81,13 @@ class WNSHandler extends PushHandler {
 	}
 
 	/**
-	 * @param $message
+	 * @param string $message
 	 * @param array $data
+	 * @return string
 	 */
-	protected static function _buildPayload($message, array $data = []) {
+	protected static function _buildPayloadXML($message, array $data = []) {
+		$message = trim(stripslashes($message));
+
 		if (isset($data['title']) && !isset($data['image'])) {
 			return '<?xml version="1.0" encoding="utf-8"?>' .
 				'<toast>' .
@@ -120,20 +128,44 @@ class WNSHandler extends PushHandler {
 				'</binding>' .
 				'</visual>' .
 				'</toast>';
-		}}
+		}
+	}
 
 	/**
 	 * send notification to Microsofts live.com WNS servers
 	 * @param string $message
-	 * @param array $payload (optional)
+	 * @param array $payload
 	 * @param array $devices
 	 * @return bool
+	 * @throws \RuntimeException
 	 */
 	public function send($message, array $payload = [], array $devices) {
 		$result = true;
 
 		// buil xml-payload
-		$xml = static::_buildPayload($message, $payload);
+		$payload['xml'] = static::_buildPayloadXML($message, $payload);
+
+		return $this->sendRaw($payload, $devices);
+	}
+
+	/**
+	 * build and send Notification from raw payload
+	 * @param  array $payload
+	 * @param  array $devices
+	 * @return bool
+	 * @throws \RuntimeException|\UnexpectedValueException
+	 */
+	public function sendRaw(array $payload, array $devices) {
+		$result = true;
+
+		// buil xml-payload
+		if (isset($payload['xml'])) {
+			$xml = $payload['xml'];
+		} elseif (isset($payload['message'])) {
+			$xml = static::_buildPayloadXML($payload['message'], $payload);
+		} else {
+			throw new \UnexpectedValueException('missing \'messages\' or \'xml\' key for WNS payload', 500);
+		}
 
 		// open curl connection
 		$curl = curl_init();
@@ -187,7 +219,6 @@ class WNSHandler extends PushHandler {
 
 			$response = curl_getinfo($curl);
 			$result   = $result && ((int) $response['http_code'] === 200);
-
 		}
 
 		// remeber to close the connection when finished

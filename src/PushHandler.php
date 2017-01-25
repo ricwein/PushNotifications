@@ -5,6 +5,9 @@
 
 namespace ricwein\PushNotification;
 
+/**
+ * PushHandler, providing base push operations
+ */
 abstract class PushHandler {
 
 	/**
@@ -16,8 +19,8 @@ abstract class PushHandler {
 	];
 
 	/**
-	 * @param string $serverToken (optional)
-	 * @param string $url (optional)
+	 * @param string $serverToken
+	 * @param string $url
 	 */
 	public function __construct($serverToken = null, $url = null) {
 		if ($serverToken !== null) {
@@ -53,6 +56,11 @@ abstract class PushHandler {
 		return $this;
 	}
 
+	/**
+	 * check and prepare internal configuration for sending
+	 * @return bool
+	 * @throws \UnexpectedValueException
+	 */
 	public function prepare() {
 		if (empty($this->_server['token'])) {
 			throw new \UnexpectedValueException('server token not set', 500);
@@ -64,11 +72,21 @@ abstract class PushHandler {
 	}
 
 	/**
-	 * build payload and send via push-handler to servers
+	 * build default PushNotification and send via PushHandler to servers
 	 * @param string $message
+	 * @param array $payload
 	 * @param array $devices
-	 * @param array $data (optional)
 	 * @return bool
+	 * @throws \UnexpectedValueException|\RuntimeException
 	 */
-	abstract public function send($message, array $data = [], array $devices);
+	abstract public function send($message, array $payload = [], array $devices);
+
+	/**
+	 * build and send Notification from raw payload
+	 * @param  array $payload
+	 * @param  array $devices
+	 * @return bool
+	 * @throws \UnexpectedValueException|\RuntimeException
+	 */
+	abstract public function sendRaw(array $payload, array $devices);
 }
