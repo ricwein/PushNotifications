@@ -28,11 +28,16 @@ class GCMHandler extends PushHandler {
 	 * @return bool
 	 */
 	public function send($message, array $payload = [], array $devices) {
+		$message = trim(stripslashes($message));
 
 		// build payload
 		$payload = [
-			'data' => array_merge([
-				'message' => trim(stripslashes($message)),
+			'notification' => [
+				'title' => substr($message, 0, 64) . (strlen($message) > 64 ? '...' : ''),
+				'body'  => $message,
+			],
+			'data'         => array_merge([
+				'message' => $message,
 			], $payload),
 		];
 
@@ -48,9 +53,15 @@ class GCMHandler extends PushHandler {
 	 */
 	public function sendRaw(array $payload, array $devices) {
 
-		$payload = array_merge([
-			'registration_ids' => $devices,
-		], $payload);
+		if (count($devices) <= 1) {
+			$payload = array_merge([
+				'to' => current($devices),
+			], $payload);
+		} else {
+			$payload = array_merge([
+				'registration_ids' => $devices,
+			], $payload);
+		}
 
 		// init http-headers
 		$headers = [

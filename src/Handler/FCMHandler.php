@@ -28,12 +28,17 @@ class FCMHandler extends PushHandler {
 	 * @return bool
 	 */
 	public function send($message, array $payload = [], array $devices) {
+		$message = trim(stripslashes($message));
 
 		// build payload
 		$payload = [
-			'priority' => 'high',
-			'data'     => array_merge([
-				'message' => trim(stripslashes($message)),
+			'priority'     => 'high',
+			'notification' => [
+				'title' => substr($message, 0, 64) . (strlen($message) > 64 ? '...' : ''),
+				'body'  => $message,
+			],
+			'data'         => array_merge([
+				'message' => $message,
 			], $payload),
 		];
 
@@ -49,7 +54,7 @@ class FCMHandler extends PushHandler {
 	 */
 	public function sendRaw(array $payload, array $devices) {
 
-		if (count($devices <= 1)) {
+		if (count($devices) <= 1) {
 			$payload = array_merge([
 				'to' => current($devices),
 			], $payload);
