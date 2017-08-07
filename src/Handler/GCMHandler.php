@@ -32,7 +32,7 @@ class GCMHandler extends PushHandler {
         // build payload
         $payload = [
             'notification' => [
-                'title' => (strlen($message) > 64 ? substr($message, 0, 61) . '...' : ''),
+                'title' => (strlen($message) > 64 ? substr($message, 0, 61) . '...' : $message),
                 'body'  => $message,
             ],
             'data'         => array_merge([

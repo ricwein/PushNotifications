@@ -33,7 +33,7 @@ class FCMHandler extends PushHandler {
         $payload = [
             'priority'     => 'high',
             'notification' => [
-                'title' => substr($message, 0, 64) . (strlen($message) > 64 ? '...' : ''),
+                'title' => (strlen($message) > 64 ? substr($message, 0, 61) . '...' : $message),
                 'body'  => $message,
             ],
             'data'         => array_merge([
