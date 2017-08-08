@@ -18,10 +18,10 @@ abstract class PushHandler {
     ];
 
     /**
-     * @param string $serverToken
-     * @param string $url
+     * @param string|null $serverToken
+     * @param string|null $url
      */
-    public function __construct($serverToken = null, $url = null) {
+    public function __construct(string $serverToken = null, string $url = null) {
         if ($serverToken !== null) {
             $this->setServerToken($serverToken);
         }
@@ -33,24 +33,30 @@ abstract class PushHandler {
 
     /**
      * @param string $url
+     *
+     * @return self
      */
-    public function setServerUrl($url) {
+    public function setServerUrl(string $url): self {
         $this->_server['url'] = $url;
         return $this;
     }
 
     /**
      * @param string $serverToken
+     *
+     * @return self
      */
-    public function setServerToken($serverToken) {
+    public function setServerToken(string $serverToken): self {
         $this->_server['token'] = $serverToken;
         return $this;
     }
 
     /**
      * @param array $server
+     *
+     * @return self
      */
-    public function setServer(array $server) {
+    public function setServer(array $server): self {
         $this->_server = array_merge($this->_server, $server);
         return $this;
     }
@@ -60,7 +66,7 @@ abstract class PushHandler {
      * @throws \UnexpectedValueException
      * @return bool
      */
-    public function prepare() {
+    public function prepare(): bool {
         if (empty($this->_server['token'])) {
             throw new \UnexpectedValueException('server token not set', 500);
         } elseif (empty($this->_server['url'])) {
@@ -72,19 +78,25 @@ abstract class PushHandler {
 
     /**
      * build default PushNotification and send via PushHandler to servers
-     * @param  string                                      $message
-     * @param  array                                       $payload
-     * @param  array                                       $devices
+     * @param string      $message
+     * @param string|null $title
+     * @param array       $payload
+     * @param array       $devices
+     *
      * @throws \UnexpectedValueException|\RuntimeException
+     *
      * @return bool
+     *
      */
-    abstract public function send($message, array $payload, array $devices);
+    abstract public function send(string $message, string $title = null, array $payload, array $devices);
 
     /**
      * build and send Notification from raw payload
-     * @param  array                                       $payload
-     * @param  array                                       $devices
+     * @param array $payload
+     * @param array $devices
+     *
      * @throws \UnexpectedValueException|\RuntimeException
+     *
      * @return bool
      */
     abstract public function sendRaw(array $payload, array $devices);

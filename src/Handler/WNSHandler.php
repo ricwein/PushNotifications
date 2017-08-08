@@ -21,12 +21,14 @@ class WNSHandler extends PushHandler {
     ];
 
     /**
-     * @param  int        $clientID
-     * @param  string     $clientSecret
+     * @param int    $clientID
+     * @param string $clientSecret
+     *
      * @throws \Exception
+     *
      * @return string
      */
-    public function requestOAuthToken($clientID, $clientSecret) {
+    public function requestOAuthToken(int $clientID, string $clientSecret): string {
         // init http-headers
         $headers = [
             'Content-Type: application/x-www-form-urlencoded',
@@ -80,11 +82,12 @@ class WNSHandler extends PushHandler {
     }
 
     /**
-     * @param  string $message
-     * @param  array  $data
+     * @param string $message
+     * @param array  $data
+     *
      * @return string
      */
-    protected static function _buildPayloadXML($message, array $data = []) {
+    protected static function _buildPayloadXML(string $message, array $data = []): string {
         $message = trim(stripslashes($message));
 
         if (isset($data['title']) && !isset($data['image'])) {
@@ -131,14 +134,20 @@ class WNSHandler extends PushHandler {
 
     /**
      * send notification to Microsofts live.com WNS servers
-     * @param  string            $message
-     * @param  array             $payload
-     * @param  array             $devices
-     * @throws \RuntimeException
+     *
+     * @param string      $message
+     * @param string|null $title
+     * @param array       $payload
+     * @param array       $devices
+     *
+     * @throws \UnexpectedValueException|\RuntimeException
+     *
      * @return bool
      */
-    public function send($message, array $payload, array $devices) {
-        $result = true;
+    public function send(string $message, string $title = null, array $payload, array $devices): bool {
+        if ($title !== null) {
+            $payload['title'] = $title;
+        }
 
         // buil xml-payload
         $payload['xml'] = static::_buildPayloadXML($message, $payload);
@@ -153,8 +162,7 @@ class WNSHandler extends PushHandler {
      * @throws \RuntimeException|\UnexpectedValueException
      * @return bool
      */
-    public function sendRaw(array $payload, array $devices) {
-        $result = true;
+    public function sendRaw(array $payload, array $devices): bool {
 
         // buil xml-payload
         if (isset($payload['xml'])) {
@@ -183,6 +191,8 @@ class WNSHandler extends PushHandler {
 
         // append payload
         curl_setopt($curl, CURLOPT_POSTFIELDS, $xml);
+
+        $result = true;
 
         foreach ($devices as $clientID => $clientSecret) {
 

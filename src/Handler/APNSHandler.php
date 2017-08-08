@@ -22,14 +22,17 @@ class APNSHandler extends PushHandler {
 
     /**
      * build binary notification-package
-     * @param  string                    $deviceToken
-     * @param  string                    $payload     json
-     * @param  array                     $arbitrary   additional settings
-     * @param  int                       $version     push-version (1/2)
+     *
+     * @param string $deviceToken
+     * @param string $payload     json
+     * @param array  $arbitrary   additional settings
+     * @param int    $version     push-version (1/2)
+     *
      * @throws \UnexpectedValueException
+     *
      * @return string
      */
-    protected function _buildNotification($deviceToken, $payload, array $arbitrary = [], $version = 1) {
+    protected function _buildNotification(string $deviceToken, string $payload, array $arbitrary = [], int $version = 1): string {
 
         // set default arbitrary settings
         $arbitrary = array_merge([
@@ -71,17 +74,22 @@ class APNSHandler extends PushHandler {
 
     /**
      * send notification to Apples APNS servers
-     * @param  string                                      $message
-     * @param  array                                       $payload
-     * @param  array                                       $devices
+     *
+     * @param string      $message
+     * @param string|null $title
+     * @param array       $payload
+     * @param array       $devices
+     *
      * @throws \UnexpectedValueException|\RuntimeException
+     *
      * @return bool
      */
-    public function send($message, array $payload, array $devices) {
+    public function send(string $message, string $title = null, array $payload, array $devices): bool {
+        $message = trim(stripslashes($message));
 
         // build payload
         $payload = array_replace_recursive(['aps' => [
-            'alert' => trim(stripslashes($message)),
+            'alert' => $title !== null ? ['title' => $title, 'body' => $message] : $message,
             'badge' => 1,
             'sound' => 'default',
         ]], $payload);
@@ -91,12 +99,15 @@ class APNSHandler extends PushHandler {
 
     /**
      * build and send Notification from raw payload
-     * @param  array                                       $payload
-     * @param  array                                       $devices
+     *
+     * @param array $payload
+     * @param array $devices
+     *
      * @throws \UnexpectedValueException|\RuntimeException
+     *
      * @return bool
      */
-    public function sendRaw(array $payload, array $devices) {
+    public function sendRaw(array $payload, array $devices): bool {
 
         // set default values
         $result    = true;

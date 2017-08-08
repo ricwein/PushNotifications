@@ -21,18 +21,23 @@ class GCMHandler extends PushHandler {
 
     /**
      * send notification to Googles GCM servers
-     * @param  string $message
-     * @param  array  $payload
-     * @param  array  $devices
+     *
+     * @param string      $message
+     * @param string|null $title
+     * @param array       $payload
+     * @param array       $devices
+     *
+     * @throws \UnexpectedValueException|\RuntimeException
+     *
      * @return bool
      */
-    public function send($message, array $payload, array $devices) {
+    public function send(string $message, string $title = null, array $payload, array $devices): bool {
         $message = trim(stripslashes($message));
 
         // build payload
         $payload = [
             'notification' => [
-                'title' => (strlen($message) > 64 ? substr($message, 0, 61) . '...' : $message),
+                'title' => $title ?? (strlen($message) > 64 ? substr($message, 0, 61) . '...' : $message),
                 'body'  => $message,
             ],
             'data'         => array_merge([
@@ -45,12 +50,15 @@ class GCMHandler extends PushHandler {
 
     /**
      * build and send Notification from raw payload
-     * @param  array             $payload
-     * @param  array             $devices
+     *
+     * @param array $payload
+     * @param array $devices
+     *
      * @throws \RuntimeException
+     *
      * @return bool
      */
-    public function sendRaw(array $payload, array $devices) {
+    public function sendRaw(array $payload, array $devices): bool {
         if (count($devices) <= 1) {
             $payload = array_merge([
                 'to' => current($devices),

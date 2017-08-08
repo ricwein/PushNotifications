@@ -1,16 +1,13 @@
 {
     "name": "ricwein/push-notifications",
-    "description": "Push Notifications for iOS (APNS), Android (GCM) and Windows (WNS)",
+    "description": "Push Notifications for iOS (APNS), Android (GCM/FCM) and Windows (WNS)",
     "type": "library",
     "license": "MIT",
-    "authors": [
-        {
-            "name": "Richard Weinhold",
-            "email": "git@ricwein.com"
-        }
-    ],
+    "authors": [{
+        "name": "Richard Weinhold",
+        "email": "git@ricwein.com"
+    }],
     "require": {
-        "php": ">= 5.6.0"
+        "php": ">= 7.0.0"
     }
 }
-

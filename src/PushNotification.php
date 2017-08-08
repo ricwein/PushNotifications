@@ -29,33 +29,39 @@ class PushNotification {
     }
 
     /**
-     * @param  PushHandler      $handler
-     * @return PushNotification
+     * @param PushHandler $handler
+     *
+     * @return self
      */
-    public function setHandler(PushHandler $handler) {
+    public function setHandler(PushHandler $handler): self {
         $this->_handler = $handler;
         return $this;
     }
 
     /**
      * build payload and send via PushHandler to servers
-     * @param  string $message
-     * @param  array  $payload
+     *
+     * @param string      $message
+     * @param string|null $title
+     * @param array       $payload
+     *
      * @return bool
      */
-    public function send($message, array $payload = []) {
+    public function send(string $message, string $title = null, array $payload = []): bool {
         if (!$this->_prepare()) {
             return false;
         }
-        return $this->_handler->send($message, $payload, $this->_devices);
+        return $this->_handler->send($message, $title, $payload, $this->_devices);
     }
 
     /**
      * send raw payload via PushHandler to servers
-     * @param  array $payload
+     *
+     * @param array $payload
+     *
      * @return bool
      */
-    public function sendRaw(array $payload = []) {
+    public function sendRaw(array $payload = []): bool {
         if (!$this->_prepare()) {
             return false;
         }
@@ -64,9 +70,10 @@ class PushNotification {
 
     /**
      * prepare PushHandler for sending
+     *
      * @return bool
      */
-    protected function _prepare() {
+    protected function _prepare(): bool {
         if (count($this->_devices) === 0) {
             return false;
         } elseif (!$this->_handler->prepare()) {
@@ -78,20 +85,25 @@ class PushNotification {
 
     /**
      * @param mixed $device
+     *
+     * @return self
      */
-    public function addDevice($device) {
+    public function addDevice($device): self {
         $this->_devices = array_merge($this->_devices, (array) $device);
         return $this;
     }
 
     /**
      * wrap handler-methods and return $this
-     * @param  string     $name
-     * @param  mixed      $arguments
+     *
+     * @param string $name
+     * @param mixed  $arguments
+     *
      * @throws \Exception
-     * @return $this
+     *
+     * @return self
      */
-    public function __call($name, $arguments) {
+    public function __call(string $name, $arguments): self {
         if (method_exists($this->_handler, $name)) {
             call_user_func_array([$this->_handler, $name], $arguments);
         } else {

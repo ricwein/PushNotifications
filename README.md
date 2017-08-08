@@ -16,7 +16,7 @@ use ricwein\PushNotification\Handler\GCMHandler;
 $push = new PushNotification(new GCMHandler());
 $push->setServerToken('ExampleGooglePushToken12345678987654321');
 $push->addDevice('device-token');
-$push->send('message', ['payload' => 'data']);
+$push->send('message', 'title', ['payload' => 'data']);
 
 ?>
 ```
@@ -36,7 +36,7 @@ $push->setServer([
 	'url'   => 'ssl://gateway.sandbox.push.apple.com:2195',
 ]);
 $push->addDevice('<device-token>');
-$push->send('message', ['payload' => 'data']);
+$push->send('message', 'title', ['payload' => 'data']);
 
 ?>
 ```
@@ -59,7 +59,7 @@ $push->addDevice([
 	'clientID' => 'clientSecret',
 	'OAuth2-Token',
 ]);
-$push->send('message', ['payload' => 'data']);
+$push->send('message', 'title', ['payload' => 'data']);
 
 ?>
 ```
@@ -193,13 +193,23 @@ $push->send('message');
 ?>
 ```
 
+Adding a title?
+
+```php
+<?php
+
+$push->send('message', 'title');
+
+?>
+```
+
 It's possible to add a payload as an array:
 
 ```php
 <?php
 
 $payload = ['data'];
-$push->send('message', $payload);
+$push->send('message', null, $payload);
 
 ?>
 ```
@@ -218,4 +228,4 @@ if (!$push->send('message')) {
 
 ### Exceptions ###
 
-This class can throw some default \Exception() - mostly in case of incorrect configuration or unreachable servers.
+This class can throw some default \Exception or \UnexpectedValueException - mostly in case of incorrect configuration or unreachable servers.
