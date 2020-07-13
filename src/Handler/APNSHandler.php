@@ -153,19 +153,35 @@ class APNSHandler extends PushHandler
 
         $encodedPayload = json_encode($payload);
 
-        // create and write notification for each single device
-        foreach ($devices as $device) {
+        try {
 
-            // build binary notification
-            $notification = $this->_buildNotification($device, $encodedPayload, $arbitrary, $arbitrary['command']);
+            set_error_handler(static function (int $errno, string $errstr): bool {
+                if (0 === error_reporting()) {
+                    // error was suppressed with the @-operator
+                    return false;
+                }
+                throw new RuntimeException("Sending to APNS failed: [{$errno}] - {$errstr}");
+            });
 
-            // write into stream and apply result onto previous results
-            $result = $result && (bool)@fwrite($stream, $notification);
+            // create and write notification for each single device
+            foreach ($devices as $device) {
+
+                // build binary notification
+                $notification = $this->_buildNotification($device, $encodedPayload, $arbitrary, $arbitrary['command']);
+
+                // write into stream and apply result onto previous results
+                if (false === fwrite($stream, $notification)) {
+                    $result = false;
+                }
+            }
+
+            // remove custom fwrite() error-handler
+            restore_error_handler();
+            return $result;
+
+        } finally {
+            // remember to close the stream when finished
+            fclose($stream);
         }
-
-        // remember to close the stream when finished
-        @fclose($stream);
-
-        return $result;
     }
 }
