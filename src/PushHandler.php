@@ -2,26 +2,32 @@
 /**
  * @author Richard Weinhold
  */
+
 namespace ricwein\PushNotification;
+
+use RuntimeException;
+use UnexpectedValueException;
 
 /**
  * PushHandler, providing base push operations
  */
-abstract class PushHandler {
+abstract class PushHandler
+{
 
     /**
      * @var array
      */
     protected $_server = [
         'token' => '',
-        'url'   => '',
+        'url' => '',
     ];
 
     /**
      * @param string|null $serverToken
      * @param string|null $url
      */
-    public function __construct(string $serverToken = null, string $url = null) {
+    public function __construct(string $serverToken = null, string $url = null)
+    {
         if ($serverToken !== null) {
             $this->setServerToken($serverToken);
         }
@@ -36,7 +42,8 @@ abstract class PushHandler {
      *
      * @return self
      */
-    public function setServerUrl(string $url): self {
+    public function setServerUrl(string $url): self
+    {
         $this->_server['url'] = $url;
         return $this;
     }
@@ -46,7 +53,8 @@ abstract class PushHandler {
      *
      * @return self
      */
-    public function setServerToken(string $serverToken): self {
+    public function setServerToken(string $serverToken): self
+    {
         $this->_server['token'] = $serverToken;
         return $this;
     }
@@ -56,21 +64,25 @@ abstract class PushHandler {
      *
      * @return self
      */
-    public function setServer(array $server): self {
+    public function setServer(array $server): self
+    {
         $this->_server = array_merge($this->_server, $server);
         return $this;
     }
 
     /**
      * check and prepare internal configuration for sending
-     * @throws \UnexpectedValueException
      * @return bool
+     * @throws UnexpectedValueException
      */
-    public function prepare(): bool {
+    public function prepare(): bool
+    {
         if (empty($this->_server['token'])) {
-            throw new \UnexpectedValueException('server token not set', 500);
-        } elseif (empty($this->_server['url'])) {
-            throw new \UnexpectedValueException('server url not set', 500);
+            throw new UnexpectedValueException('server token not set', 500);
+        }
+
+        if (empty($this->_server['url'])) {
+            throw new UnexpectedValueException('server url not set', 500);
         }
 
         return true;
@@ -78,26 +90,23 @@ abstract class PushHandler {
 
     /**
      * build default PushNotification and send via PushHandler to servers
-     * @param string      $message
+     * @param string $message
      * @param string|null $title
-     * @param array       $payload
-     * @param array       $devices
-     *
-     * @throws \UnexpectedValueException|\RuntimeException
-     *
+     * @param array $payload
+     * @param array $devices
      * @return bool
+     * @throws UnexpectedValueException|RuntimeException
      *
      */
-    abstract public function send(string $message, string $title = null, array $payload, array $devices);
+    abstract public function send(string $message, ?string $title, array $payload, array $devices): bool;
 
     /**
      * build and send Notification from raw payload
      * @param array $payload
      * @param array $devices
-     *
-     * @throws \UnexpectedValueException|\RuntimeException
-     *
      * @return bool
+     * @throws UnexpectedValueException
+     * @throws RuntimeException
      */
-    abstract public function sendRaw(array $payload, array $devices);
+    abstract public function sendRaw(array $payload, array $devices): bool;
 }

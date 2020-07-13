@@ -2,33 +2,36 @@
 /**
  * @author Richard Weinhold
  */
+
 namespace ricwein\PushNotification\Handler;
 
 use ricwein\PushNotification\PushHandler;
+use RuntimeException;
+use UnexpectedValueException;
 
 /**
  * PushHandler for Windows push Notification Services
  */
-class WNSHandler extends PushHandler {
+class WNSHandler extends PushHandler
+{
 
     /**
      * @var array
      */
     protected $_server = [
-        'token'    => '',
-        'url'      => '',
+        'token' => '',
+        'url' => '',
         'auth-url' => 'https://login.live.com/accesstoken.srf',
     ];
 
     /**
-     * @param int    $clientID
+     * @param int $clientID
      * @param string $clientSecret
-     *
-     * @throws \Exception
-     *
      * @return string
+     * @throws RuntimeException
      */
-    public function requestOAuthToken(int $clientID, string $clientSecret): string {
+    public function requestOAuthToken(int $clientID, string $clientSecret): string
+    {
         // init http-headers
         $headers = [
             'Content-Type: application/x-www-form-urlencoded',
@@ -58,93 +61,67 @@ class WNSHandler extends PushHandler {
         curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
 
         // send request
-        $result = curl_exec($curl);
+        $response = curl_exec($curl);
 
-        if ($result === false) {
+        if ($response === false) {
             $error = curl_error($curl);
             curl_close($curl);
-            throw new \Exception('error processing WPN: ' . $error, 500);
+            throw new RuntimeException('error processing WPN: ' . $error, 500);
         }
 
-        $result = json_decode($result);
+        $result = json_decode($response, true);
 
         // remeber to close the connection when finished
         curl_close($curl);
 
         // handle errors
-        if (isset($output->error)) {
-            throw new \Exception($output->error_description, 500);
-        } elseif (!isset($result->access_token)) {
-            throw new \Exception('access_token not found', 500);
+        if (isset($result['error'], $result['error_description'])) {
+            throw new RuntimeException("[{$result['error']}] - {$result['error_description']}", 500);
         }
 
-        return $result->access_token;
+        if (!isset($result['access_token'])) {
+            throw new RuntimeException('access_token not found', 500);
+        }
+
+        return $result['access_token'];
     }
 
     /**
      * @param string $message
-     * @param array  $data
-     *
+     * @param array $data
      * @return string
      */
-    protected static function _buildPayloadXML(string $message, array $data = []): string {
+    protected static function _buildPayloadXML(string $message, array $data = []): string
+    {
         $message = trim(stripslashes($message));
 
         if (isset($data['title']) && !isset($data['image'])) {
-            return '<?xml version="1.0" encoding="utf-8"?>' .
-                '<toast>' .
-                '<visual>' .
-                '<binding template="ToastText02">' .
-                '<text id="1">' . $message . '</text>' .
-                '<text id="2">' . $data['title'] . '</text>' .
-                '</binding>' .
-                '</visual>' .
-                '</toast>';
-        } elseif (isset($data['title'])) {
-            return '<?xml version="1.0" encoding="utf-8"?>' .
-                '<toast>' .
-                '<visual>' .
-                '<binding template="ToastImageAndText02">' .
-                '<image id="1" src="' . $data['image'] . '" alt="' . $data['image'] . '"/>' .
-                '<text id="1">' . $message . '</text>' .
-                '<text id="2">' . $data['title'] . '</text>' .
-                '</binding>' .
-                '</visual>' .
-                '</toast>';
-        } elseif (isset($data['image'])) {
-            return '<?xml version="1.0" encoding="utf-8"?>' .
-                '<toast>' .
-                '<visual>' .
-                '<binding template="ToastImageAndText01">' .
-                '<image id="1" src="' . $data['image'] . '" alt="' . $data['image'] . '"/>' .
-                '<text id="1">' . $message . '</text>' .
-                '</binding>' .
-                '</visual>' .
-                '</toast>';
+            return "<?xml version=\"1.0\" encoding=\"utf-8\"?><toast><visual><binding template=\"ToastText02\"><text id=\"1\">{$message}</text><text id=\"2\">{$data['title']}</text></binding></visual></toast>";
         }
-        return '<?xml version="1.0" encoding="utf-8"?>' .
-                '<toast>' .
-                '<visual>' .
-                '<binding template="ToastText01">' .
-                '<text id="1">' . $message . '</text>' .
-                '</binding>' .
-                '</visual>' .
-                '</toast>';
+
+        if (isset($data['title'])) {
+            return "<?xml version=\"1.0\" encoding=\"utf-8\"?><toast><visual><binding template=\"ToastImageAndText02\"><image id=\"1\" src=\"{$data['image']}\" alt=\"{$data['image']}\"/><text id=\"1\">{$message}</text><text id=\"2\">{$data['title']}</text></binding></visual></toast>";
+        }
+
+        if (isset($data['image'])) {
+            return "<?xml version=\"1.0\" encoding=\"utf-8\"?><toast><visual><binding template=\"ToastImageAndText01\"><image id=\"1\" src=\"{$data['image']}\" alt=\"{$data['image']}\"/><text id=\"1\">{$message}</text></binding></visual></toast>";
+        }
+
+        return "<?xml version=\"1.0\" encoding=\"utf-8\"?><toast><visual><binding template=\"ToastText01\"><text id=\"1\">{$message}</text></binding></visual></toast>";
     }
 
     /**
-     * send notification to Microsofts live.com WNS servers
-     *
-     * @param string      $message
+     * send notification to Microsoft live.com WNS servers
+     * @param string $message
      * @param string|null $title
-     * @param array       $payload
-     * @param array       $devices
-     *
-     * @throws \UnexpectedValueException|\RuntimeException
-     *
+     * @param array $payload
+     * @param array $devices
      * @return bool
+     * @throws UnexpectedValueException
+     * @throws RuntimeException
      */
-    public function send(string $message, string $title = null, array $payload, array $devices): bool {
+    public function send(string $message, ?string $title, array $payload, array $devices): bool
+    {
         if ($title !== null) {
             $payload['title'] = $title;
         }
@@ -157,12 +134,13 @@ class WNSHandler extends PushHandler {
 
     /**
      * build and send Notification from raw payload
-     * @param  array                                       $payload
-     * @param  array                                       $devices
-     * @throws \RuntimeException|\UnexpectedValueException
+     * @param array $payload
+     * @param array $devices
      * @return bool
+     * @throws RuntimeException|UnexpectedValueException
      */
-    public function sendRaw(array $payload, array $devices): bool {
+    public function sendRaw(array $payload, array $devices): bool
+    {
 
         // buil xml-payload
         if (isset($payload['xml'])) {
@@ -170,7 +148,7 @@ class WNSHandler extends PushHandler {
         } elseif (isset($payload['message'])) {
             $xml = static::_buildPayloadXML($payload['message'], $payload);
         } else {
-            throw new \UnexpectedValueException('missing \'messages\' or \'xml\' key for WNS payload', 500);
+            throw new UnexpectedValueException('missing \'messages\' or \'xml\' key for WNS payload', 500);
         }
 
         // open curl connection
@@ -222,11 +200,11 @@ class WNSHandler extends PushHandler {
             if (curl_exec($curl) === false) {
                 $error = curl_error($curl);
                 curl_close($curl);
-                throw new \RuntimeException('error processing WPN: ' . $error, 500);
+                throw new RuntimeException('error processing WPN: ' . $error, 500);
             }
 
             $response = curl_getinfo($curl);
-            $result   = $result && ((int) $response['http_code'] === 200);
+            $result = $result && ((int)$response['http_code'] === 200);
         }
 
         // remeber to close the connection when finished

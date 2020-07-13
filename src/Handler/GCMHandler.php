@@ -2,45 +2,48 @@
 /**
  * @author Richard Weinhold
  */
+
 namespace ricwein\PushNotification\Handler;
 
 use ricwein\PushNotification\PushHandler;
+use RuntimeException;
+use UnexpectedValueException;
 
 /**
  * PushHandler for Google Cloud Messaging
  */
-class GCMHandler extends PushHandler {
+class GCMHandler extends PushHandler
+{
 
     /**
      * @var array
      */
     protected $_server = [
         'token' => '',
-        'url'   => 'https://gcm-http.googleapis.com/gcm/send',
+        'url' => 'https://gcm-http.googleapis.com/gcm/send',
     ];
 
     /**
      * send notification to Googles GCM servers
-     *
-     * @param string      $message
+     * @param string $message
      * @param string|null $title
-     * @param array       $payload
-     * @param array       $devices
-     *
-     * @throws \UnexpectedValueException|\RuntimeException
-     *
+     * @param array $payload
+     * @param array $devices
      * @return bool
+     * @throws UnexpectedValueException
+     * @throws RuntimeException
      */
-    public function send(string $message, string $title = null, array $payload, array $devices): bool {
+    public function send(string $message, ?string $title, array $payload, array $devices): bool
+    {
         $message = trim(stripslashes($message));
 
         // build payload
         $payload = [
             'notification' => [
                 'title' => $title ?? (strlen($message) > 64 ? substr($message, 0, 61) . '...' : $message),
-                'body'  => $message,
+                'body' => $message,
             ],
-            'data'         => array_merge([
+            'data' => array_merge([
                 'message' => $message,
             ], $payload),
         ];
@@ -50,15 +53,13 @@ class GCMHandler extends PushHandler {
 
     /**
      * build and send Notification from raw payload
-     *
      * @param array $payload
      * @param array $devices
-     *
-     * @throws \RuntimeException
-     *
      * @return bool
+     * @throws RuntimeException
      */
-    public function sendRaw(array $payload, array $devices): bool {
+    public function sendRaw(array $payload, array $devices): bool
+    {
         if (count($devices) <= 1) {
             $payload = array_merge([
                 'to' => current($devices),
@@ -101,7 +102,7 @@ class GCMHandler extends PushHandler {
         if ($result === false) {
             $error = curl_error($curl);
             curl_close($curl);
-            throw new \RuntimeException('error processing GCM: ' . $error, 500);
+            throw new RuntimeException('error processing GCM: ' . $error, 500);
         }
 
         // remeber to close the connection when finished
@@ -109,6 +110,6 @@ class GCMHandler extends PushHandler {
 
         // decode response and check if sending to all devices succeeded
         $result = @json_decode($result, true);
-        return isset($result['success']) && (int) $result['success'] === count($devices);
+        return isset($result['success']) && (int)$result['success'] === count($devices);
     }
 }

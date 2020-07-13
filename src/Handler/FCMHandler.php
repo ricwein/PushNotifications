@@ -2,46 +2,49 @@
 /**
  * @author Richard Weinhold
  */
+
 namespace ricwein\PushNotification\Handler;
 
 use ricwein\PushNotification\PushHandler;
+use RuntimeException;
+use UnexpectedValueException;
 
 /**
  * PushHandler for Firebase Cloud Messaging (Google)
  */
-class FCMHandler extends PushHandler {
+class FCMHandler extends PushHandler
+{
 
     /**
      * @var array
      */
     protected $_server = [
         'token' => '',
-        'url'   => 'https://fcm.googleapis.com/fcm/send',
+        'url' => 'https://fcm.googleapis.com/fcm/send',
     ];
 
     /**
      * send notification to Googles FCM servers
-     *
-     * @param string      $message
+     * @param string $message
      * @param string|null $title
-     * @param array       $payload
-     * @param array       $devices
-     *
-     * @throws \UnexpectedValueException|\RuntimeException
-     *
+     * @param array $payload
+     * @param array $devices
      * @return bool
+     * @throws UnexpectedValueException
+     * @throws RuntimeException
      */
-    public function send(string $message, string $title = null, array $payload, array $devices): bool {
+    public function send(string $message, ?string $title, array $payload, array $devices): bool
+    {
         $message = trim(stripslashes($message));
 
         // build payload
         $payload = [
-            'priority'     => 'high',
+            'priority' => 'high',
             'notification' => [
                 'title' => $title ?? (strlen($message) > 64 ? substr($message, 0, 61) . '...' : $message),
-                'body'  => $message,
+                'body' => $message,
             ],
-            'data'         => array_merge([
+            'data' => array_merge([
                 'message' => $message,
             ], $payload),
         ];
@@ -55,11 +58,12 @@ class FCMHandler extends PushHandler {
      * @param array $payload
      * @param array $devices
      *
-     * @throws \RuntimeException
-     *
      * @return bool
+     * @throws RuntimeException
+     *
      */
-    public function sendRaw(array $payload, array $devices): bool {
+    public function sendRaw(array $payload, array $devices): bool
+    {
         if (count($devices) <= 1) {
             $payload = array_merge([
                 'to' => current($devices),
@@ -102,7 +106,7 @@ class FCMHandler extends PushHandler {
         if ($result === false) {
             $error = curl_error($curl);
             curl_close($curl);
-            throw new \RuntimeException('error processing FCM: ' . $error, 500);
+            throw new RuntimeException('error processing FCM: ' . $error, 500);
         }
 
         // remeber to close the connection when finished
@@ -110,6 +114,6 @@ class FCMHandler extends PushHandler {
 
         // decode response and check if sending to all devices succeeded
         $result = @json_decode($result, true);
-        return isset($result['success']) && (int) $result['success'] === count($devices);
+        return isset($result['success']) && (int)$result['success'] === count($devices);
     }
 }
