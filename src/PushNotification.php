@@ -7,117 +7,89 @@ namespace ricwein\PushNotification;
 
 use RuntimeException;
 
-/**
- * PushNotification core
- * @method self setServerUrl(string $url)
- * @method self setServerToken(string $serverToken)
- * @method self setServer(array $server)
- */
 class PushNotification
 {
+    /**
+     * @var array<string, Handler>
+     */
+    private $handlers;
 
     /**
-     * @var PushHandler|null
+     * PushNotification constructor.
+     * @param array<string, Handler> $handlers
      */
-    protected $_handler = null;
-
-    /**
-     * @var array
-     */
-    protected $_devices = [];
-
-    /**
-     * @param PushHandler|null $handler
-     */
-    public function __construct(PushHandler $handler = null)
+    public function __construct(array $handlers)
     {
-        if ($handler !== null) {
-            $this->setHandler($handler);
+        foreach ($handlers as $handler) {
+            if (!$handler instanceof Handler) {
+                throw new RuntimeException(sprintf('Invalid Handler of type: %s', is_object($handler) ? get_class($handler) : gettype($handler)));
+            }
         }
+
+        $this->handlers = $handlers;
     }
 
     /**
-     * @param PushHandler $handler
-     * @return self
+     * @param array<string, string|Handler> $devices
+     * @return array<array>
      */
-    public function setHandler(PushHandler $handler): self
+    private function prepareHandlers(array $devices): array
     {
-        $this->_handler = $handler;
-        return $this;
+        $handlers = $this->handlers;
+        $feedback = [];
+
+        foreach ($devices as $token => $deviceHandler) {
+
+            if (is_string($deviceHandler) && isset($this->handlers[$deviceHandler])) {
+                $handlers[$deviceHandler]->addDevice($token);
+                continue;
+            }
+
+            if ($deviceHandler instanceof Handler) {
+                $handlers[] = $deviceHandler;
+                $deviceHandler->addDevice($token);
+                continue;
+            }
+
+            $feedback[$token] = new RuntimeException(sprintf('Invalid Handler of type %s for device: %s', is_object($deviceHandler) ? get_class($deviceHandler) : gettype($deviceHandler), $token), 500);
+        }
+
+        return [$handlers, $feedback];
     }
 
     /**
-     * build payload and send via PushHandler to servers
-     * @param string $message
-     * @param string|null $title
+     * @param Message $message
+     * @param array<string, string|Handler> $devices
+     * @return Result
+     */
+    public function send(Message $message, array $devices): Result
+    {
+        [$handlers, $feedback] = $this->prepareHandlers($devices);
+        $handlerFeedback = [];
+
+        /** @var Handler $handler */
+        foreach ($handlers as $handler) {
+            $handlerFeedback[] = $handler->send($message);
+        }
+
+        return new Result(array_merge($feedback, ...$handlerFeedback));
+    }
+
+    /**
      * @param array $payload
-     * @return bool
+     * @param array<string, string|Handler> $devices
+     * @return Result
      */
-    public function send(string $message, string $title = null, array $payload = []): bool
+    public function sendRaw(array $payload, array $devices): Result
     {
-        if (!$this->_prepare()) {
-            return false;
-        }
-        return $this->_handler->send($message, $title, $payload, $this->_devices);
-    }
+        [$handlers, $feedback] = $this->prepareHandlers($devices);
+        $handlerFeedback = [];
 
-    /**
-     * send raw payload via PushHandler to servers
-     * @param array $payload
-     * @return bool
-     */
-    public function sendRaw(array $payload = []): bool
-    {
-        if (!$this->_prepare()) {
-            return false;
-        }
-        return $this->_handler->sendRaw($payload, $this->_devices);
-    }
-
-    /**
-     * prepare PushHandler for sending
-     * @return bool
-     */
-    protected function _prepare(): bool
-    {
-        if (count($this->_devices) === 0) {
-            return false;
+        /** @var Handler $handler */
+        foreach ($handlers as $handler) {
+            $handlerFeedback[] = $handler->sendRaw($payload);
         }
 
-        if (!$this->_handler->prepare()) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * @param mixed $device
-     * @return self
-     */
-    public function addDevice($device): self
-    {
-        $this->_devices = array_merge($this->_devices, (array)$device);
-        return $this;
-    }
-
-    /**
-     * wraps handler-methods
-     * @param string $name
-     * @param mixed $arguments
-     * @return self
-     */
-    public function __call(string $name, $arguments): self
-    {
-        if ($this->_handler === null) {
-            throw new RuntimeException("Call to {$name}() requires a push-handler to be set, but is null.", 500);
-        }
-
-        if (!method_exists($this->_handler, $name)) {
-            throw new RuntimeException(sprintf("Unable to call unknown method: %s->%s().", get_class($this->_handler), $name), 500);
-        }
-
-        call_user_func_array([$this->_handler, $name], $arguments);
-        return $this;
+        return new Result(array_merge($feedback, ...$handlerFeedback));
     }
 }

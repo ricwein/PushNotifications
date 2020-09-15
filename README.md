@@ -1,179 +1,132 @@
-# PushNotification #
+# PushNotification
 
-... is a small php-library to wrap Apple, Google and Windows Push-Notifications into a simple syntax.
+... is a small php-library to wrap Apple (APNS) and Google (FCM) Push-Notifications into a simple syntax.
 
 Examples:
 
-
-### Android: ###
-
-```php
-use ricwein\PushNotification\PushNotification;
-use ricwein\PushNotification\Handler\GCMHandler;
-
-$push = new PushNotification(new GCMHandler());
-$push->setServerToken('ExampleGooglePushToken12345678987654321');
-$push->addDevice('device-token');
-$push->send('message', 'title', ['payload' => 'data']);
-```
-
-
-### iOS: ###
+### Android
 
 ```php
-use ricwein\PushNotification\PushNotification;
-use ricwein\PushNotification\Handler\APNSHandler;
+use ricwein\PushNotification\{PushNotification, Message, Handler};
 
-$push = new PushNotification(new APNSHandler());
-$push->setServer([
-	'token' => 'path/to/cert.pem',
-	'url'   => 'ssl://gateway.sandbox.push.apple.com:2195',
-]);
-$push->addDevice('<device-token>');
-$push->send('message', 'title', ['payload' => 'data']);
+$fcm = new Handler\FCM('ExampleGooglePushToken12345678987654321');
+$message = new Message('message', 'title', ['payload' => 'data']);
+$push = new PushNotification(['fcm' => $fcm]);
+$push->send($message, ['<device-token>' => 'fcm']);
 ```
 
-
-### Windows: ###
+### iOS
 
 ```php
-use ricwein\PushNotification\PushNotification;
-use ricwein\PushNotification\Handler\WNSHandler;
+use ricwein\PushNotification\{PushNotification, Message, Handler, Config};
 
-$push = new PushNotification(new WNSHandler());
-$push->setServer([
-	'token' => 'wns-push-token',
-	'url'   => 'server.url',
-]);
-$push->addDevice([
-	'clientID' => 'clientSecret',
-	'OAuth2-Token',
-]);
-$push->send('message', 'title', ['payload' => 'data']);
+$apns = new Handler\APNS(Config::ENV_PRODUCTION, 'com.bundle.id', 'cert.pem');
+$message = new Message('message', 'title', ['payload' => 'data']);
+$push = new PushNotification(['apns' => $apns]);
+$push->send($message, ['<device-token>' => 'apns']);
 ```
 
+### mixed
 
-## usage: ##
+Sending messages to multiple devices of difference operating systems is also simple: 
+
+```php
+use ricwein\PushNotification\{PushNotification, Message, Handler, Config};
+
+$fcm = new Handler\FCM('ExampleGooglePushToken12345678987654321');
+$apns = new Handler\APNS(Config::ENV_PRODUCTION, 'com.bundle.id', 'cert.pem');
+$message = new Message('message', 'title');
+$push = new PushNotification(['apns' => $apns, 'fcm' => $fcm]);
+
+$push->send($message, [
+    '<ios-device-token1>' => 'apns',
+    '<ios-device-token2>' => 'apns',
+    '<android-device-token1>' => 'fcm',
+    '<android-device-token2>' => 'fcm',
+]);
+```
+
+## usage
 
 This class uses the root-namespace `ricwein\PushNotification`.
 
+### init
 
-### init ###
-
-It's possible to init the PushNotification class with a specific push-handler:
-
-```php
-use ricwein\PushNotification\PushNotification;
-use ricwein\PushNotification\Handler\GCMHandler;
-
-$push = new PushNotification(new GCMHandler());
-```
-
-or without, and adding the push-handler later:
-
-```php
-use ricwein\PushNotification\PushNotification;
-use ricwein\PushNotification\Handler\GCMHandler;
-
-$push        = new PushNotification();
-$pushHandler = new GCMHandler();
-$push->setHandler($pushHandler);
-```
+The libraries main class is called `PushNotification` and requires an array of available push-handlers for the constructor. It's possible to set an ID as the handlers array key, to allow assigning devices to the handler later on.
 
 Available push-handler are:
 
-- Apple:   `PushNotification\Handler\APNSHandler`
-- Google:  `PushNotification\Handler\GCMHandler`
-- Windows: `PushNotification\Handler\WNSHandler`
+- Apple:   `PushNotification\Handler\APNS`
+- Google:  `PushNotification\Handler\FCM`
 
-They're all extending `PushNotification\PushHandler`
+They're all extending `PushNotification\Handler`
 
+### configuration
 
-### configuration ###
+Since all push-settings are push-handler specific, the settings are directly applied in the handler constructors.
 
-Since all push-settings are push-handler specific, the according handler has to been added to the PushNotification class before applying the configuration at the PushNotification.
+- APNS:
+```php
+ APNS(
+    string $environment /* (Config::ENV_PRODUCTION / Config::ENV_DEVELOPMENT) */,
+    string $appBundleID,
+    string $certPath,
+    ?string $certPassphrase = null,
+    ?string $url = null,
+    int $timeout = 10
+)
+ ```
 
-Settings as *server-token* and *server-url* can be set like:
+- FCM:
+```php
+ FCM(
+    string $token,
+    string $url = self::FCM_ENDPOINT,
+    int $timeout = 10
+)
+ ```
+
+It's also possible to have multiple push-handlers with different configurations like:
 
 ```php
-$push->setServerToken('server-token');
-$push->setServerUrl('server-url');
-```
+use ricwein\PushNotification\{PushNotification, Message, Handler, Config};
 
-or as an array:
+$apnsProd = new Handler\APNS(Config::ENV_PRODUCTION, 'com.bundle.id', 'cert.pem');
+$apnsDev = new Handler\APNS(Config::ENV_DEVELOPMENT, 'com.bundle.id', 'cert-dev.pem');
+$message = new Message('message', 'title');
+$push = new PushNotification(['prod' => $apnsProd, 'dev' => $apnsDev]);
 
-```php
-$push->setServer([
-	'token' => 'server-token',
-	'url'   => 'server-url',
+$push->send($message, [
+    '<ios-device-token1>' => 'prod',
+    '<ios-device-token2>' => 'dev',
 ]);
+
 ```
 
-It's also possible to set the configuration directly at the push-handler:
+### sending
+
+Sending is either available for a message object or a raw payload.
+
+- A message object is translated into a native push-notification message with body and title for FCM or APNS before sending.
+- A raw payload (array) is sent '*as it is*' which might **not** be a good idea, if you want to mix APNS and FCM in one request. 
 
 ```php
-$pushHandler->setServerToken('server-token');
-$pushHandler->setServerUrl('server-url');
-
-// or:
-$pushHandler->setServer([
-	'token' => 'server-token',
-	'url'   => 'server-url',
-]);
-
-// or even:
-$pushHandler = new GCMHandler('server-token', 'server-url');
+$message = new Message('body', 'title');
+$message->setSound('test.aiff')->setBadge(2)->setPriority(Config::PRIORITY_NORMAL);
+$push->send($message, [...]);
 ```
 
-### client-devices ###
+### error handling
 
-The class can send notifications to multiple devices at once. The device-push-tokens are escaped by default.
+The `PushNotification::send()` method returns an `Result` object. This usually contains an array of per device errors. If everything succeeded, the entry is null. You can fetch failed device-messages with:
 
 ```php
-$push->addDevice('push-token1');
-$push->addDevice('push-token2');
-
-// or:
-$push->addDevice([
-	'push-token1',
-	'push-token2',
-]);
+$result = $push->send($message, [...]);
+$errors = $result->getFailed(); 
 ```
 
-> Note: The WNSHandler allows adding either:
->	- client-id -> client-secret pairs (as array key & value)
->	- or adding directly OAuth2-tokens
->	- and even mixed combinations of both
-
-### sending ###
-
-Sending a messages is as simple as that:
+Error are saved as Exeptions, so it's possible to just throw them. To simply just throw the first error if one occurred, call:
 
 ```php
-$push->send('message');
+$push->send($message, [...])->throwOnFirstError();
 ```
-
-Adding a title?
-
-```php
-$push->send('message', 'title');
-```
-
-It's possible to add a payload as an array:
-
-```php
-$payload = ['data'];
-$push->send('message', null, $payload);
-```
-
-Sometimes the given server or device-tokens are expired or sending simply failed. To check if sending was successfully you can use the return-value of send():
-
-```php
-if (!$push->send('message')) {
-	throw new \Exception('oh-no: Sending PushNotifications failed.');
-}
-```
-
-### Exceptions ###
-
-This class can throw some default \Exception or \UnexpectedValueException - mostly in case of incorrect configuration or unreachable servers.

@@ -1,6 +1,6 @@
 {
   "name": "ricwein/push-notifications",
-  "description": "Push Notifications for iOS (APNS), Android (GCM/FCM) and Windows (WNS)",
+  "description": "Push Notifications for iOS (APNS), Android (FCM)",
   "type": "library",
   "license": "MIT",
   "authors": [
