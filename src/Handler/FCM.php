@@ -26,7 +26,7 @@ class FCM extends Handler
      */
     private $timeout;
 
-    public function __construct(string $token, string $url = self::FCM_ENDPOINT, int $timeout = 10)
+    public function __construct(string $token, string $url = self::FCM_ENDPOINT, int $timeout = 30)
     {
         $this->endpoint = $url;
         $this->token = $token;
@@ -77,7 +77,6 @@ class FCM extends Handler
 
         $content = json_encode($payload, JSON_UNESCAPED_UNICODE);
 
-
         $headers = [
             "Authorization: key={$this->token}",
             "Content-Type: application/json",
@@ -99,7 +98,7 @@ class FCM extends Handler
 
             // execute request
             $result = curl_exec($curl);
-            $httpStatusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            $httpStatusCode = curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
 
             if ($result === false || 200 !== $httpStatusCode) {
                 $errorCode = curl_errno($curl);
@@ -112,6 +111,7 @@ class FCM extends Handler
                 return [new RuntimeException("Requests was send, but resulted in an error.", 400)];
             }
 
+            $this->devices = [];
             return [null];
         } finally {
             curl_close($curl);

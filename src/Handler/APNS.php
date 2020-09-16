@@ -10,7 +10,7 @@ use RuntimeException;
 class APNS extends Handler
 {
     private const URLS = [
-        Config::ENV_DEVELOPMENT => 'https://api.sandbox.push.apple.com:443/3/device',
+        Config::ENV_DEVELOPMENT => 'https://api.development.push.apple.com:443/3/device',
         Config::ENV_PRODUCTION => 'https://api.push.apple.com:443/3/device',
     ];
 
@@ -79,7 +79,7 @@ class APNS extends Handler
             return [];
         }
 
-        $payload = array_merge([
+        $payload = array_merge_recursive([
             'aps' => [
                 'alert' => $message->getTitle() !== null ? ['title' => $message->getTitle(), 'body' => $message->getBody()] : $message->getBody(),
                 'badge' => $message->getBadge(),
@@ -105,7 +105,6 @@ class APNS extends Handler
         ];
 
         $options = [
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_2_0,
             CURLOPT_PORT => $this->port,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_POST => true,
@@ -119,47 +118,58 @@ class APNS extends Handler
             $options[CURLOPT_KEYPASSWD] = $this->certPassphrase;
         }
 
-        $feedback = [];
+
         $curl = curl_init();
+        curl_setopt($curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
 
-        try {
-            foreach ($this->devices as $deviceToken) {
+        $feedback = [];
+        foreach ($this->devices as $deviceKey => $deviceToken) {
 
-                // cleanup device tokens
-                $deviceToken = str_replace(' ', '', trim($deviceToken, '<> '));
-                $options[CURLOPT_URL] = "{$this->endpoint}/{$deviceToken}";
+            // cleanup device tokens
+            $deviceToken = str_replace(' ', '', trim($deviceToken, '<> '));
+            $options[CURLOPT_URL] = "{$this->endpoint}/{$deviceToken}";
 
-                // setup curl for device push notification
-                curl_setopt_array($curl, $options);
+            // setup curl for device push notification
+            curl_setopt_array($curl, $options);
 
-                // execute request
-                $result = curl_exec($curl);
-                $httpStatusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            // execute request
+            $result = curl_exec($curl);
 
-                if ($result === false) {
-                    $feedback[$deviceToken] = new RuntimeException("Request failed with.", 500);
-                    continue;
-                }
+            $httpStatusCode = curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
 
-                if (200 !== $httpStatusCode) {
-                    $errorCode = curl_errno($curl);
-                    $error = curl_error($curl);
-                    $result = @json_decode($result, true);
-
-                    if (isset($result['reason'])) {
-                        $feedback[$deviceToken] = new RuntimeException("Request failed with: [{$errorCode}]: {$error} - Reason: {$result['reason']}", $httpStatusCode);
-                    } else {
-                        $feedback[$deviceToken] = new RuntimeException("Request failed with: [{$errorCode}]: {$error}", $httpStatusCode);
-                    }
-                    continue;
-                }
-
+            // success!
+            if ($result !== false && $httpStatusCode === 200) {
+                unset($this->devices[$deviceKey]);
                 $feedback[$deviceToken] = null;
+                continue;
             }
 
-            return $feedback;
-        } finally {
-            curl_close($curl);
+            // error handling
+            $errorCode = curl_errno($curl);
+            $error = curl_error($curl);
+
+            if ($result === false) {
+                if (!empty($error)) {
+                    $feedback[$deviceToken] = new RuntimeException("Request failed with: [{$errorCode}]: {$error}", 500);
+                } elseif ($httpStatusCode !== 0) {
+                    $feedback[$deviceToken] = new RuntimeException("Request failed with: HTTP status code {$httpStatusCode}.", 500);
+                } else {
+                    $feedback[$deviceToken] = new RuntimeException("Request failed.", 500);
+                }
+                continue;
+            }
+
+            $result = @json_decode($result, true);
+            if (isset($result['reason'])) {
+                $feedback[$deviceToken] = new RuntimeException("Request failed with: [{$errorCode}]: {$error} - Reason: {$result['reason']}", $httpStatusCode);
+            } else {
+                $feedback[$deviceToken] = new RuntimeException("Request failed with: [{$errorCode}]: {$error}", $httpStatusCode);
+            }
         }
+
+        curl_close($curl);
+
+        $this->devices = [];
+        return $feedback;
     }
 }

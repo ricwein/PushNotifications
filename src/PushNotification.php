@@ -18,7 +18,7 @@ class PushNotification
      * PushNotification constructor.
      * @param array<string, Handler> $handlers
      */
-    public function __construct(array $handlers)
+    public function __construct(array $handlers = [])
     {
         foreach ($handlers as $handler) {
             if (!$handler instanceof Handler) {
