@@ -9,19 +9,24 @@ Examples:
 ```php
 use ricwein\PushNotification\{PushNotification, Message, Handler};
 
-$fcm = new Handler\FCM('ExampleGooglePushToken12345678987654321');
 $message = new Message('message', 'title', ['payload' => 'data']);
+$fcm = new Handler\FCM('ExampleGooglePushToken12345678987654321');
+
 $push = new PushNotification(['fcm' => $fcm]);
 $push->send($message, ['<device-token>' => 'fcm']);
 ```
 
 ### iOS
 
+> NOTE: The `APNS` Handler uses the *new* apple push servers, which require HTTP2. Therefore, curl with HTTP2 support must be installed. If it's not available, use the *legacy* `APNSBinary` handler instead!
+
 ```php
 use ricwein\PushNotification\{PushNotification, Message, Handler, Config};
 
-$apns = new Handler\APNS(Config::ENV_PRODUCTION, 'com.bundle.id', 'cert.pem');
 $message = new Message('message', 'title', ['payload' => 'data']);
+$apns = new Handler\APNS(Config::ENV_PRODUCTION, 'com.bundle.id', 'cert.pem');
+// $legacy = new Handler\APNSBinary(Config::ENV_PRODUCTION, 'cert.pem');
+
 $push = new PushNotification(['apns' => $apns]);
 $push->send($message, ['<device-token>' => 'apns']);
 ```
@@ -33,11 +38,11 @@ Sending messages to multiple devices of difference operating systems is also sim
 ```php
 use ricwein\PushNotification\{PushNotification, Message, Handler, Config};
 
+$message = new Message('message', 'title');
 $fcm = new Handler\FCM('ExampleGooglePushToken12345678987654321');
 $apns = new Handler\APNS(Config::ENV_PRODUCTION, 'com.bundle.id', 'cert.pem');
-$message = new Message('message', 'title');
-$push = new PushNotification(['apns' => $apns, 'fcm' => $fcm]);
 
+$push = new PushNotification(['apns' => $apns, 'fcm' => $fcm]);
 $push->send($message, [
     '<ios-device-token1>' => 'apns',
     '<ios-device-token2>' => 'apns',

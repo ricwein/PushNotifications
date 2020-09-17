@@ -10,8 +10,8 @@ use RuntimeException;
 class APNS extends Handler
 {
     private const URLS = [
-        Config::ENV_DEVELOPMENT => 'https://api.development.push.apple.com:443/3/device',
         Config::ENV_PRODUCTION => 'https://api.push.apple.com:443/3/device',
+        Config::ENV_DEVELOPMENT => 'https://api.development.push.apple.com:443/3/device',
     ];
 
     /**
