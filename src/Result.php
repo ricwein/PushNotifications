@@ -3,6 +3,8 @@
 namespace ricwein\PushNotification;
 
 use Exception;
+use ricwein\PushNotification\Exceptions\RequestException;
+use ricwein\PushNotification\Exceptions\ResponseReasonException;
 use Throwable;
 
 class Result
@@ -17,6 +19,17 @@ class Result
         $this->feedback = $feedback;
     }
 
+    /**
+     * @return array<Exception|null>
+     */
+    public function getFeedback(): array
+    {
+        return $this->feedback;
+    }
+
+    /**
+     * @return array<Exception>
+     */
     public function getFailed(): array
     {
         $failed = [];
@@ -29,12 +42,39 @@ class Result
     }
 
     /**
-     * @throws Throwable
+     * @throws Exception
      */
-    public function throwOnFirstError(): void
+    public function throwOnFirstException(): void
     {
         foreach ($this->feedback as $error) {
-            if ($error instanceof Throwable) {
+            if ($error instanceof Exception) {
+                throw $error;
+            }
+        }
+    }
+
+    /**
+     * @return array<string>
+     */
+    public function getInvalidDeviceTokes(): array
+    {
+        $invalidTokens = [];
+        foreach ($this->feedback as $token => $result) {
+            if ($result instanceof ResponseReasonException && $result->isInvalidDeviceToken()) {
+                $invalidTokens[] = $token;
+            }
+        }
+        return $invalidTokens;
+    }
+
+    /**
+     * @param string $type
+     * @throws Throwable
+     */
+    public function throwOnFirstExceptionOfType(string $type): void
+    {
+        foreach ($this->feedback as $error) {
+            if ($error instanceof $type) {
                 throw $error;
             }
         }

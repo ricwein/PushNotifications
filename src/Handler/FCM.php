@@ -3,6 +3,8 @@
 namespace ricwein\PushNotification\Handler;
 
 use ricwein\PushNotification\Config;
+use ricwein\PushNotification\Exceptions\RequestException;
+use ricwein\PushNotification\Exceptions\ResponseException;
 use ricwein\PushNotification\Handler;
 use ricwein\PushNotification\Message;
 use RuntimeException;
@@ -97,18 +99,18 @@ class FCM extends Handler
             curl_setopt_array($curl, $options);
 
             // execute request
-            $result = curl_exec($curl);
+            $response = curl_exec($curl);
             $httpStatusCode = curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
 
-            if ($result === false || 200 !== $httpStatusCode) {
+            if ($response === false || 200 !== $httpStatusCode) {
                 $errorCode = curl_errno($curl);
                 $error = curl_error($curl);
-                return [new RuntimeException("Request failed with: [{$errorCode}]: {$error}", $httpStatusCode)];
+                return [new RequestException("Request failed with: [{$errorCode}]: {$error}", $httpStatusCode)];
             }
 
-            $result = @json_decode($result, true);
-            if (!isset($result['success']) || (int)$result['success'] !== count($this->devices)) {
-                return [new RuntimeException("Requests was send, but resulted in an error.", 400)];
+            $result = @json_decode($response, true);
+            if ($result === null || !isset($result['success']) || (int)$result['success'] !== count($this->devices)) {
+                return [new ResponseException("Requests was send, but resulted in an error. Response: {$response}", 400)];
             }
 
             $this->devices = [];

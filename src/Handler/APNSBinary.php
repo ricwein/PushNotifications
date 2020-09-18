@@ -3,6 +3,8 @@
 namespace ricwein\PushNotification\Handler;
 
 use ricwein\PushNotification\Config;
+use ricwein\PushNotification\Exceptions\RequestException;
+use ricwein\PushNotification\Exceptions\ResponseException;
 use ricwein\PushNotification\Handler;
 use ricwein\PushNotification\Message;
 use RuntimeException;
@@ -53,6 +55,22 @@ class APNSBinary extends Handler
         $this->timeout = $timeout;
     }
 
+    public function addDevice(string $token): void
+    {
+        if (64 !== $length = strlen($token)) {
+            throw new RuntimeException("Invalid device-token {$token}, length must be 64 chars but is {$length}.", 500);
+        }
+        if (!ctype_xdigit($token)) {
+            throw new RuntimeException("Invalid device-token {$token}, must be of type hexadecimal but is not.");
+        }
+        $this->devices[] = $token;
+    }
+
+    /**
+     * @param Message $message
+     * @return array
+     * @throws RequestException
+     */
     public function send(Message $message): array
     {
         if (count($this->devices) < 1) {
@@ -70,13 +88,19 @@ class APNSBinary extends Handler
         return $this->sendRaw($payload, $message->getPriority());
     }
 
+    /**
+     * @param array $payload
+     * @param int $priority
+     * @return array
+     * @throws RequestException
+     */
     public function sendRaw(array $payload, int $priority = Config::PRIORITY_HIGH): array
     {
         if (count($this->devices) < 1) {
             return [];
         }
 
-        $arbitrary = ['command' => 1, 'priority' => $priority === Config::PRIORITY_HIGH ? 10 : 5];
+        $arbitrary = ['command' => 2, 'priority' => $priority === Config::PRIORITY_HIGH ? 10 : 5];
 
         // extract arbitrary settings
         foreach (['expire', 'messageID', 'priority', 'command'] as $key) {
@@ -106,18 +130,18 @@ class APNSBinary extends Handler
         );
 
         if (!$stream) {
-            throw new RuntimeException("Error connecting to server: [{$errno}] {$errstr}", 500);
+            throw new RequestException("Error connecting to server: [{$errno}] {$errstr}", 500);
         }
 
         $content = json_encode($payload, JSON_UNESCAPED_UNICODE);
 
         try {
-            set_error_handler(static function (int $errno, string $errstr): bool {
+            set_error_handler(static function (int $errorCode, string $error): bool {
                 if (0 === error_reporting()) {
                     // error was suppressed with the @-operator
                     return false;
                 }
-                throw new RuntimeException("Sending to APNS failed: [{$errno}] - {$errstr}");
+                throw new RequestException("Sending to APNS failed: [{$errorCode}] - {$error}");
             });
 
             $feedback = [];
@@ -133,7 +157,7 @@ class APNSBinary extends Handler
                     continue;
                 }
 
-                $feedback[$deviceToken] = new RuntimeException("Request failed.", 500);
+                $feedback[$deviceToken] = new RequestException("Request failed.", 500);
             }
 
             $this->devices = [];

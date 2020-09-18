@@ -130,8 +130,20 @@ $result = $push->send($message, [...]);
 $errors = $result->getFailed(); 
 ```
 
-Error are saved as Exeptions, so it's possible to just throw them. To simply just throw the first error if one occurred, call:
+Errors are handled as Exeptions, so it's possible to just throw them. To simply just throw the first error if one occurred, call:
 
 ```php
-$push->send($message, [...])->throwOnFirstError();
+$push->send($message, [...])->throwOnFirstException();
+```
+
+***Be aware***: Sometimes other failures than usage-errors occur. APNS (HTTP2) can respond with explicit reasons, which will be handled as `ResponseReasonException`. It's a good idea to not just throw them, but handle them other ways. E.g. you might want to delete or update device-tokens which were marked as invalid.
+
+```php
+use \ricwein\PushNotification\Exceptions\ResponseReasonException;
+
+foreach($result->getFailed() as $token => $error) {
+    if ($error instanceof ResponseReasonException && $error->isInvalidDeviceToken()) {
+        // do something with this information.
+    }
+}
 ```

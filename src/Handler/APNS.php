@@ -3,6 +3,9 @@
 namespace ricwein\PushNotification\Handler;
 
 use ricwein\PushNotification\Config;
+use ricwein\PushNotification\Exceptions\RequestException;
+use ricwein\PushNotification\Exceptions\ResponseException;
+use ricwein\PushNotification\Exceptions\ResponseReasonException;
 use ricwein\PushNotification\Handler;
 use ricwein\PushNotification\Message;
 use RuntimeException;
@@ -71,6 +74,17 @@ class APNS extends Handler
         $this->certPath = $certPath;
         $this->certPassphrase = $certPassphrase;
         $this->timeout = $timeout;
+    }
+
+    public function addDevice(string $token): void
+    {
+        if (64 !== $length = strlen($token)) {
+            throw new RuntimeException("Invalid device-token {$token}, length must be 64 chars but is {$length}.", 500);
+        }
+        if (!ctype_xdigit($token)) {
+            throw new RuntimeException("Invalid device-token {$token}, must be of type hexadecimal but is not.");
+        }
+        $this->devices[] = $token;
     }
 
     public function send(Message $message): array
@@ -150,20 +164,20 @@ class APNS extends Handler
 
             if ($result === false) {
                 if (!empty($error)) {
-                    $feedback[$deviceToken] = new RuntimeException("Request failed with: [{$errorCode}]: {$error}", 500);
+                    $feedback[$deviceToken] = new RequestException("Request failed with: [{$errorCode}]: {$error}", 500);
                 } elseif ($httpStatusCode !== 0) {
-                    $feedback[$deviceToken] = new RuntimeException("Request failed with: HTTP status code {$httpStatusCode}.", 500);
+                    $feedback[$deviceToken] = new RequestException("Request failed with: HTTP status code {$httpStatusCode}.", 500);
                 } else {
-                    $feedback[$deviceToken] = new RuntimeException("Request failed.", 500);
+                    $feedback[$deviceToken] = new RequestException("Request failed.", 500);
                 }
                 continue;
             }
 
             $result = @json_decode($result, true);
             if (isset($result['reason'])) {
-                $feedback[$deviceToken] = new RuntimeException("Request failed with: [{$errorCode}]: {$error} - Reason: {$result['reason']}", $httpStatusCode);
+                $feedback[$deviceToken] = new ResponseReasonException($result['reason'], $httpStatusCode);
             } else {
-                $feedback[$deviceToken] = new RuntimeException("Request failed with: [{$errorCode}]: {$error}", $httpStatusCode);
+                $feedback[$deviceToken] = new ResponseException("Request failed with: [{$errorCode}]: {$error}", $httpStatusCode);
             }
         }
 
