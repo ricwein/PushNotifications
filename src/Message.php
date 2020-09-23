@@ -9,28 +9,28 @@ class Message
     /**
      * @var string|null
      */
-    private $title;
+    private ?string $title;
 
     /**
      * @var string
      */
-    private $body;
+    private string $body;
 
     /**
      * @var array
      */
-    private $payload;
+    private array $payload;
 
     /**
      * @var string
      */
-    private $sound = Config::SOUND_DEFAULT;
+    private string $sound = Config::SOUND_DEFAULT;
 
     /** @var int */
-    private $badge = 1;
+    private int $badge = 1;
 
     /** @var int */
-    private $priority = Config::PRIORITY_HIGH;
+    private int $priority = Config::PRIORITY_HIGH;
 
     public function __construct(string $body, ?string $title = null, array $payload = [])
     {

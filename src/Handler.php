@@ -16,7 +16,7 @@ abstract class Handler
     /**
      * @var string[]
      */
-    protected $devices = [];
+    protected array $devices = [];
 
     public function addDevice(string $token): void
     {

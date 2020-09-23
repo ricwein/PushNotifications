@@ -20,54 +20,54 @@ class APNS extends Handler
     /**
      * @var string
      */
-    private $endpoint;
+    private string $endpoint;
 
     /**
      * @var string
      */
-    private $appBundleID;
+    private string $appBundleID;
 
     /**
      * @var int
      */
-    private $port;
+    private int $port;
 
     /**
      * @var string
      */
-    private $certPath;
+    private string $certPath;
 
     /**
      * @var string|null
      */
-    private $certPassphrase;
+    private ?string $certPassphrase;
 
     /**
      * @var int
      */
-    private $timeout;
+    private int $timeout;
 
     public function __construct(string $environment, string $appBundleID, string $certPath, ?string $certPassphrase = null, ?string $url = null, int $timeout = 10)
     {
         if ($url === null && isset(static::URLS[$environment])) {
             $url = static::URLS[$environment];
         } elseif ($url === null) {
-            throw new RuntimeException("Unknown or unsupported environment {$environment}", 500);
+            throw new RuntimeException("[APNS] Unknown or unsupported environment {$environment}", 500);
         }
 
         if (false === $urlComponents = parse_url($url)) {
-            throw new RuntimeException("Invalid endpoint-url given for APNS, failed to parse: {$url}", 500);
+            throw new RuntimeException("[APNS] Invalid endpoint-url given for APNS, failed to parse: {$url}", 500);
         }
 
         if (!isset($urlComponents['host'])) {
-            throw new RuntimeException("Invalid endpoint-url given for APNS, missing host in: {$url}", 500);
+            throw new RuntimeException("[APNS] Invalid endpoint-url given for APNS, missing host in: {$url}", 500);
         }
 
         $this->endpoint = sprintf("%s://%s%s", $urlComponents['scheme'] ?? 'https', $urlComponents['host'], $urlComponents['path'] ?? '/3/device');
         $this->port = !empty($urlComponents['port']) ? (int)$urlComponents['port'] : 443;
 
         if (!file_exists($certPath) || !is_readable($certPath)) {
-            throw new RuntimeException("Certificate not found or not readable for path: {$certPath}", 404);
+            throw new RuntimeException("[APNS] Certificate not found or not readable for path: {$certPath}", 404);
         }
 
         $this->appBundleID = $appBundleID;
@@ -79,10 +79,10 @@ class APNS extends Handler
     public function addDevice(string $token): void
     {
         if (64 !== $length = strlen($token)) {
-            throw new RuntimeException("Invalid device-token {$token}, length must be 64 chars but is {$length}.", 500);
+            throw new RuntimeException("[APNS] Invalid device-token {$token}, length must be 64 chars but is {$length}.", 500);
         }
         if (!ctype_xdigit($token)) {
-            throw new RuntimeException("Invalid device-token {$token}, must be of type hexadecimal but is not.");
+            throw new RuntimeException("[APNS] Invalid device-token {$token}, must be of type hexadecimal but is not.");
         }
         $this->devices[] = $token;
     }
@@ -164,11 +164,11 @@ class APNS extends Handler
 
             if ($result === false) {
                 if (!empty($error)) {
-                    $feedback[$deviceToken] = new RequestException("Request failed with: [{$errorCode}]: {$error}", 500);
+                    $feedback[$deviceToken] = new RequestException("[APNS] Request failed with: [{$errorCode}]: {$error}", 500);
                 } elseif ($httpStatusCode !== 0) {
-                    $feedback[$deviceToken] = new RequestException("Request failed with: HTTP status code {$httpStatusCode}.", 500);
+                    $feedback[$deviceToken] = new RequestException("[APNS] Request failed with: HTTP status code {$httpStatusCode}.", 500);
                 } else {
-                    $feedback[$deviceToken] = new RequestException("Request failed.", 500);
+                    $feedback[$deviceToken] = new RequestException("[APNS] Request failed.", 500);
                 }
                 continue;
             }
@@ -177,7 +177,7 @@ class APNS extends Handler
             if (isset($result['reason'])) {
                 $feedback[$deviceToken] = new ResponseReasonException($result['reason'], $httpStatusCode);
             } else {
-                $feedback[$deviceToken] = new ResponseException("Request failed with: [{$errorCode}]: {$error}", $httpStatusCode);
+                $feedback[$deviceToken] = new ResponseException("[APNS] Request failed with: [{$errorCode}]: {$error}", $httpStatusCode);
             }
         }
 

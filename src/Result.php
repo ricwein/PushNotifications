@@ -12,7 +12,7 @@ class Result
     /**
      * @var array<string, Exception|null>
      */
-    private $feedback;
+    private array $feedback;
 
     public function __construct(array $feedback)
     {

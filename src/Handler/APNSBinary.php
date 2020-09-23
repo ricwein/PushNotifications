@@ -9,6 +9,11 @@ use ricwein\PushNotification\Handler;
 use ricwein\PushNotification\Message;
 use RuntimeException;
 
+/**
+ * Class APNSBinary
+ * @package ricwein\PushNotification\Handler
+ * @deprecated
+ */
 class APNSBinary extends Handler
 {
     private const URLS = [
@@ -43,11 +48,11 @@ class APNSBinary extends Handler
         } elseif (isset(static::URLS[$environment])) {
             $this->endpoint = static::URLS[$environment];
         } else {
-            throw new RuntimeException("Unknown or unsupported environment {$environment}", 500);
+            throw new RuntimeException("[APNSBinary] Unknown or unsupported environment {$environment}", 500);
         }
 
         if (!file_exists($certPath) || !is_readable($certPath)) {
-            throw new RuntimeException("Certificate not found or not readable for path: {$certPath}", 404);
+            throw new RuntimeException("[APNSBinary] Certificate not found or not readable for path: {$certPath}", 404);
         }
 
         $this->certPath = $certPath;
@@ -58,10 +63,10 @@ class APNSBinary extends Handler
     public function addDevice(string $token): void
     {
         if (64 !== $length = strlen($token)) {
-            throw new RuntimeException("Invalid device-token {$token}, length must be 64 chars but is {$length}.", 500);
+            throw new RuntimeException("[APNSBinary] Invalid device-token {$token}, length must be 64 chars but is {$length}.", 500);
         }
         if (!ctype_xdigit($token)) {
-            throw new RuntimeException("Invalid device-token {$token}, must be of type hexadecimal but is not.");
+            throw new RuntimeException("[APNSBinary] Invalid device-token {$token}, must be of type hexadecimal but is not.");
         }
         $this->devices[] = $token;
     }
@@ -130,7 +135,7 @@ class APNSBinary extends Handler
         );
 
         if (!$stream) {
-            throw new RequestException("Error connecting to server: [{$errno}] {$errstr}", 500);
+            throw new RequestException("[APNSBinary] Error connecting to server: [{$errno}] {$errstr}", 500);
         }
 
         $content = json_encode($payload, JSON_UNESCAPED_UNICODE);
@@ -141,7 +146,7 @@ class APNSBinary extends Handler
                     // error was suppressed with the @-operator
                     return false;
                 }
-                throw new RequestException("Sending to APNS failed: [{$errorCode}] - {$error}");
+                throw new RequestException("[APNSBinary] Sending failed: [{$errorCode}] - {$error}");
             });
 
             $feedback = [];
@@ -157,7 +162,7 @@ class APNSBinary extends Handler
                     continue;
                 }
 
-                $feedback[$deviceToken] = new RequestException("Request failed.", 500);
+                $feedback[$deviceToken] = new RequestException("[APNSBinary] Request failed.", 500);
             }
 
             $this->devices = [];
@@ -204,6 +209,6 @@ class APNSBinary extends Handler
                 return $frame;
         }
 
-        throw new RuntimeException("Unsupported command version: {$version}", 500);
+        throw new RuntimeException("[APNSBinary] Unsupported command version: {$version}", 500);
     }
 }

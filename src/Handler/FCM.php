@@ -7,7 +7,6 @@ use ricwein\PushNotification\Exceptions\RequestException;
 use ricwein\PushNotification\Exceptions\ResponseException;
 use ricwein\PushNotification\Handler;
 use ricwein\PushNotification\Message;
-use RuntimeException;
 
 class FCM extends Handler
 {
@@ -16,17 +15,17 @@ class FCM extends Handler
     /**
      * @var string
      */
-    private $endpoint;
+    private string $endpoint;
 
     /**
      * @var string
      */
-    private $token;
+    private string $token;
 
     /**
      * @var int
      */
-    private $timeout;
+    private int $timeout;
 
     public function __construct(string $token, string $url = self::FCM_ENDPOINT, int $timeout = 30)
     {
@@ -105,12 +104,12 @@ class FCM extends Handler
             if ($response === false || 200 !== $httpStatusCode) {
                 $errorCode = curl_errno($curl);
                 $error = curl_error($curl);
-                return [new RequestException("Request failed with: [{$errorCode}]: {$error}", $httpStatusCode)];
+                return [new RequestException("[FCM ]Request failed with: [{$errorCode}]: {$error}", $httpStatusCode)];
             }
 
             $result = @json_decode($response, true);
             if ($result === null || !isset($result['success']) || (int)$result['success'] !== count($this->devices)) {
-                return [new ResponseException("Requests was send, but resulted in an error. Response: {$response}", 400)];
+                return [new ResponseException("[FCM] Requests was send, but resulted in an error. Response: {$response}", 400)];
             }
 
             $this->devices = [];

@@ -12,7 +12,7 @@ class PushNotification
     /**
      * @var array<string, Handler>
      */
-    private $handlers;
+    private array $handlers;
 
     /**
      * PushNotification constructor.

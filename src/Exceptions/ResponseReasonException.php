@@ -75,7 +75,7 @@ class ResponseReasonException extends ResponseException
         self::REASON_DEVICE_TOKEN_NOT_FOR_TOPIC,
     ];
 
-    private $reason;
+    private string $reason;
 
     public function __construct(string $reason, $code = 400, Throwable $previous = null)
     {
