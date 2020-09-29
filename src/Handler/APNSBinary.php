@@ -2,9 +2,9 @@
 
 namespace ricwein\PushNotification\Handler;
 
+use JsonException;
 use ricwein\PushNotification\Config;
 use ricwein\PushNotification\Exceptions\RequestException;
-use ricwein\PushNotification\Exceptions\ResponseException;
 use ricwein\PushNotification\Handler;
 use ricwein\PushNotification\Message;
 use RuntimeException;
@@ -24,22 +24,22 @@ class APNSBinary extends Handler
     /**
      * @var string
      */
-    private $endpoint;
+    private string $endpoint;
 
     /**
      * @var string
      */
-    private $certPath;
+    private string $certPath;
 
     /**
      * @var string|null
      */
-    private $certPassphrase;
+    private ?string $certPassphrase;
 
     /**
      * @var int
      */
-    private $timeout;
+    private int $timeout;
 
     public function __construct(string $environment, string $certPath, ?string $certPassphrase = null, ?string $url = null, int $timeout = 10)
     {
@@ -74,6 +74,7 @@ class APNSBinary extends Handler
     /**
      * @param Message $message
      * @return array
+     * @throws JsonException
      * @throws RequestException
      */
     public function send(Message $message): array
@@ -98,6 +99,7 @@ class APNSBinary extends Handler
      * @param int $priority
      * @return array
      * @throws RequestException
+     * @throws JsonException
      */
     public function sendRaw(array $payload, int $priority = Config::PRIORITY_HIGH): array
     {
@@ -138,7 +140,7 @@ class APNSBinary extends Handler
             throw new RequestException("[APNSBinary] Error connecting to server: [{$errno}] {$errstr}", 500);
         }
 
-        $content = json_encode($payload, JSON_UNESCAPED_UNICODE);
+        $content = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
 
         try {
             set_error_handler(static function (int $errorCode, string $error): bool {

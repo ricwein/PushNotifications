@@ -10,6 +10,7 @@ class ResponseReasonException extends ResponseException
 {
     public const REASON_UNKNOWN = 'UNKNOWN';
 
+    // APNS
     public const REASON_BAD_DEVICE_TOKEN = 'BadDeviceToken';
     public const REASON_BAD_COLLAPSE_ID = 'BadCollapseId';
     public const REASON_BAD_EXPIRATION_DATE = 'BadExpirationDate';
@@ -35,9 +36,23 @@ class ResponseReasonException extends ResponseException
     public const REASON_PAYLOAD_TOO_LARGE = 'PayloadTooLarge';
     public const REASON_TOO_MANY_PROVIDER_TOKEN_UPDATES = 'TooManyProviderTokenUpdates';
     public const REASON_TOO_MANY_REQUESTS = 'TooManyRequests';
-    public const REASON_INTERNAL_SERVER_ERROR = 'InternalServerError';
     public const REASON_SERVICE_UNAVAILABLE = 'ServiceUnavailable';
     public const REASON_SHUTDOWN = 'Shutdown';
+
+    // FCM
+    public const REASON_NOT_REGISTERED = 'NotRegistered';
+    public const REASON_DEVICE_MESSAGE_RATE_EXCEEDED = 'DeviceMessageRateExceeded';
+    public const REASON_MISSING_REGISTRATION = 'MissingRegistration';
+    public const REASON_INVALID_REGISTRATION = 'InvalidRegistration';
+    public const REASON_INVALID_PACKAGE_NAME = 'InvalidPackageName';
+    public const REASON_MISMATCH_SENDER_ID = 'MismatchSenderId';
+    public const REASON_INVALID_PARAMETERS = 'InvalidParameters';
+    public const REASON_MESSAGE_TOO_BIG = 'MessageTooBig';
+    public const REASON_INVALID_TTL = 'InvalidTtl';
+    public const REASON_INVALID_APNS_CREDENTIAL = 'InvalidApnsCredential';
+
+    // FCM + APNS
+    public const REASON_INTERNAL_SERVER_ERROR = 'InternalServerError';
 
     public const GROUP_VALID_REASONS = [
         self::REASON_BAD_DEVICE_TOKEN,
@@ -65,14 +80,28 @@ class ResponseReasonException extends ResponseException
         self::REASON_PAYLOAD_TOO_LARGE,
         self::REASON_TOO_MANY_PROVIDER_TOKEN_UPDATES,
         self::REASON_TOO_MANY_REQUESTS,
-        self::REASON_INTERNAL_SERVER_ERROR,
         self::REASON_SERVICE_UNAVAILABLE,
         self::REASON_SHUTDOWN,
+
+        self::REASON_NOT_REGISTERED,
+        self::REASON_DEVICE_MESSAGE_RATE_EXCEEDED,
+        self::REASON_MISSING_REGISTRATION,
+        self::REASON_INVALID_REGISTRATION,
+        self::REASON_INVALID_PACKAGE_NAME,
+        self::REASON_MISMATCH_SENDER_ID,
+        self::REASON_INVALID_PARAMETERS,
+        self::REASON_MESSAGE_TOO_BIG,
+        self::REASON_INVALID_TTL,
+        self::REASON_INVALID_APNS_CREDENTIAL,
+
+        self::REASON_INTERNAL_SERVER_ERROR,
     ];
 
     public const GROUP_INVALID_TOKEN_REASONS = [
         self::REASON_BAD_DEVICE_TOKEN,
         self::REASON_DEVICE_TOKEN_NOT_FOR_TOPIC,
+        self::REASON_NOT_REGISTERED,
+        self::REASON_INVALID_REGISTRATION,
     ];
 
     private string $reason;

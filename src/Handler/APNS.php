@@ -2,6 +2,7 @@
 
 namespace ricwein\PushNotification\Handler;
 
+use JsonException;
 use ricwein\PushNotification\Config;
 use ricwein\PushNotification\Exceptions\RequestException;
 use ricwein\PushNotification\Exceptions\ResponseException;
@@ -87,6 +88,11 @@ class APNS extends Handler
         $this->devices[] = $token;
     }
 
+    /**
+     * @param Message $message
+     * @return array
+     * @throws JsonException
+     */
     public function send(Message $message): array
     {
         if (count($this->devices) < 1) {
@@ -104,13 +110,19 @@ class APNS extends Handler
         return $this->sendRaw($payload, $message->getPriority());
     }
 
+    /**
+     * @param array $payload
+     * @param int $priority
+     * @return array
+     * @throws JsonException
+     */
     public function sendRaw(array $payload, int $priority = Config::PRIORITY_HIGH): array
     {
         if (count($this->devices) < 1) {
             return [];
         }
 
-        $content = json_encode($payload, JSON_UNESCAPED_UNICODE);
+        $content = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
 
         $headers = [
             sprintf('apns-priority: %d', $priority === Config::PRIORITY_HIGH ? 10 : 5),
@@ -173,8 +185,8 @@ class APNS extends Handler
                 continue;
             }
 
-            $result = @json_decode($result, true);
-            if (isset($result['reason'])) {
+            $result = @json_decode($result, true, 512, JSON_THROW_ON_ERROR);
+            if (isset($result['reason']) && in_array($result['reason'], ResponseReasonException::GROUP_VALID_REASONS, true)) {
                 $feedback[$deviceToken] = new ResponseReasonException($result['reason'], $httpStatusCode);
             } else {
                 $feedback[$deviceToken] = new ResponseException("[APNS] Request failed with: [{$errorCode}]: {$error}", $httpStatusCode);
