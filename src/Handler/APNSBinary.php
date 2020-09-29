@@ -10,8 +10,6 @@ use ricwein\PushNotification\Message;
 use RuntimeException;
 
 /**
- * Class APNSBinary
- * @package ricwein\PushNotification\Handler
  * @deprecated
  */
 class APNSBinary extends Handler
@@ -24,7 +22,6 @@ class APNSBinary extends Handler
     private string $endpoint;
     private string $certPath;
     private ?string $certPassphrase;
-    private ?string $caCertPath;
     private int $timeout;
 
     public function __construct(string $environment, string $certPath, ?string $certPassphrase = null, ?string $caCertPath = null, ?string $url = null, int $timeout = 10)
@@ -44,7 +41,8 @@ class APNSBinary extends Handler
         $this->certPath = $certPath;
         $this->certPassphrase = $certPassphrase;
         $this->timeout = $timeout;
-        $this->caCertPath = $caCertPath;
+
+        $this->setCaCertPath($caCertPath);
     }
 
     public function addDevice(string $token): void

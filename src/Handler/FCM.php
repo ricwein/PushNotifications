@@ -18,11 +18,13 @@ class FCM extends Handler
     private string $token;
     private int $timeout;
 
-    public function __construct(string $token, string $url = self::FCM_ENDPOINT, int $timeout = 30)
+    public function __construct(string $token, string $url = self::FCM_ENDPOINT, ?string $caCertPath = null, int $timeout = 30)
     {
         $this->endpoint = $url;
         $this->token = $token;
         $this->timeout = $timeout;
+
+        $this->setCaCertPath($caCertPath);
     }
 
     /**
@@ -93,6 +95,10 @@ class FCM extends Handler
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => $this->timeout,
         ];
+
+        if (null !== $caCertOptions = $this->getCurlCAPathOptions()) {
+            $options = array_merge($options, $caCertOptions);
+        }
 
         $curl = curl_init();
 

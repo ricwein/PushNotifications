@@ -23,7 +23,6 @@ class APNS extends Handler
     private int $port;
     private string $certPath;
     private ?string $certPassphrase;
-    private ?string $caCertPath;
     private int $timeout;
 
     public function __construct(string $environment, string $appBundleID, string $certPath, ?string $certPassphrase = null, ?string $caCertPath = null, ?string $url = null, int $timeout = 10)
@@ -54,11 +53,7 @@ class APNS extends Handler
         $this->certPassphrase = $certPassphrase;
         $this->timeout = $timeout;
 
-        if ($caCertPath !== null) {
-            $this->caCertPath = $caCertPath;
-        } elseif (class_exists('\Composer\CaBundle\CaBundle')) {
-            $this->caCertPath = \Composer\CaBundle\CaBundle::getSystemCaRootBundlePath();
-        }
+        $this->setCaCertPath($caCertPath);
     }
 
     public function addDevice(string $token): void
@@ -128,17 +123,8 @@ class APNS extends Handler
             $options[CURLOPT_KEYPASSWD] = $this->certPassphrase;
         }
 
-        if ($this->caCertPath !== null) {
-            $caCertPath = realpath($this->caCertPath);
-            if ($caCertPath === null || !file_exists($caCertPath) || !is_readable($caCertPath)) {
-                throw new RuntimeException("[APNS] CA not found or not readable for path: {$this->caCertPath}", 404);
-            }
-
-            if (is_dir($caCertPath)) {
-                $options[CURLOPT_CAPATH] = $caCertPath;
-            } else {
-                $options[CURLOPT_CAINFO] = $caCertPath;
-            }
+        if (null !== $caCertOptions = $this->getCurlCAPathOptions()) {
+            $options = array_merge($options, $caCertOptions);
         }
 
         $curl = curl_init();
