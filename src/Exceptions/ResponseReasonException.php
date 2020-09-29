@@ -41,14 +41,17 @@ class ResponseReasonException extends ResponseException
 
     // FCM
     public const REASON_NOT_REGISTERED = 'NotRegistered';
-    public const REASON_DEVICE_MESSAGE_RATE_EXCEEDED = 'DeviceMessageRateExceeded';
     public const REASON_MISSING_REGISTRATION = 'MissingRegistration';
     public const REASON_INVALID_REGISTRATION = 'InvalidRegistration';
     public const REASON_INVALID_PACKAGE_NAME = 'InvalidPackageName';
     public const REASON_MISMATCH_SENDER_ID = 'MismatchSenderId';
     public const REASON_INVALID_PARAMETERS = 'InvalidParameters';
     public const REASON_MESSAGE_TOO_BIG = 'MessageTooBig';
+    public const REASON_INVALID_DATA_KEY = 'InvalidDataKey';
     public const REASON_INVALID_TTL = 'InvalidTtl';
+    public const REASON_UNAVAILABLE = 'Unavailable';
+    public const REASON_DEVICE_MESSAGE_RATE_EXCEEDED = 'DeviceMessageRateExceeded';
+    public const REASON_TOPICS_MESSAGE_RATE_EXCEEDED = 'TopicsMessageRateExceeded';
     public const REASON_INVALID_APNS_CREDENTIAL = 'InvalidApnsCredential';
 
     // FCM + APNS
@@ -84,15 +87,18 @@ class ResponseReasonException extends ResponseException
         self::REASON_SHUTDOWN,
 
         self::REASON_NOT_REGISTERED,
-        self::REASON_DEVICE_MESSAGE_RATE_EXCEEDED,
         self::REASON_MISSING_REGISTRATION,
         self::REASON_INVALID_REGISTRATION,
         self::REASON_INVALID_PACKAGE_NAME,
         self::REASON_MISMATCH_SENDER_ID,
         self::REASON_INVALID_PARAMETERS,
         self::REASON_MESSAGE_TOO_BIG,
+        self::REASON_INVALID_DATA_KEY,
         self::REASON_INVALID_TTL,
+        self::REASON_UNAVAILABLE,
         self::REASON_INVALID_APNS_CREDENTIAL,
+        self::REASON_DEVICE_MESSAGE_RATE_EXCEEDED,
+        self::REASON_TOPICS_MESSAGE_RATE_EXCEEDED,
 
         self::REASON_INTERNAL_SERVER_ERROR,
     ];
