@@ -14,19 +14,8 @@ class FCM extends Handler
 {
     public const FCM_ENDPOINT = 'https://fcm.googleapis.com/fcm/send';
 
-    /**
-     * @var string
-     */
     private string $endpoint;
-
-    /**
-     * @var string
-     */
     private string $token;
-
-    /**
-     * @var int
-     */
     private int $timeout;
 
     public function __construct(string $token, string $url = self::FCM_ENDPOINT, int $timeout = 30)

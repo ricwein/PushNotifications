@@ -21,27 +21,13 @@ class APNSBinary extends Handler
         Config::ENV_DEVELOPMENT => 'tlsv1.2://gateway.sandbox.push.apple.com:2195',
     ];
 
-    /**
-     * @var string
-     */
     private string $endpoint;
-
-    /**
-     * @var string
-     */
     private string $certPath;
-
-    /**
-     * @var string|null
-     */
     private ?string $certPassphrase;
-
-    /**
-     * @var int
-     */
+    private ?string $caCertPath;
     private int $timeout;
 
-    public function __construct(string $environment, string $certPath, ?string $certPassphrase = null, ?string $url = null, int $timeout = 10)
+    public function __construct(string $environment, string $certPath, ?string $certPassphrase = null, ?string $caCertPath = null, ?string $url = null, int $timeout = 10)
     {
         if ($url !== null) {
             $this->endpoint = $url;
@@ -58,6 +44,7 @@ class APNSBinary extends Handler
         $this->certPath = $certPath;
         $this->certPassphrase = $certPassphrase;
         $this->timeout = $timeout;
+        $this->caCertPath = $caCertPath;
     }
 
     public function addDevice(string $token): void
@@ -124,6 +111,15 @@ class APNSBinary extends Handler
         // set cert passphrase if given
         if ($this->certPassphrase !== null) {
             $sslOptions['passphrase'] = $this->certPassphrase;
+        }
+
+        // set CA certificate if given
+        if ($this->caCertPath !== null) {
+            $caCertPath = realpath($this->caCertPath);
+            if ($caCertPath === null || !file_exists($caCertPath) || !is_readable($caCertPath)) {
+                throw new RuntimeException("[APNSBinary] CA not found or not readable for path: {$this->caCertPath}", 404);
+            }
+            $sslOptions['cafile'] = $caCertPath;
         }
 
         // open tcp-stream to server

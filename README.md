@@ -18,7 +18,7 @@ $push->send($message, ['<device-token>' => 'fcm']);
 
 ### iOS
 
-> NOTE: The `APNS` Handler uses the *new* apple push servers, which require HTTP2. Therefore, curl with HTTP2 support must be installed. If it's not available, use the *legacy* `APNSBinary` handler instead!
+> NOTE: The `APNS` Handler uses the *new* apple push servers, which require HTTP2. Therefore, curl with HTTP2 support must be installed. If it's not available, use the *legacy*, ***deprecated*** `APNSBinary` handler instead.
 
 ```php
 use ricwein\PushNotification\{PushNotification, Message, Handler, Config};

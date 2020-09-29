@@ -18,37 +18,15 @@ class APNS extends Handler
         Config::ENV_DEVELOPMENT => 'https://api.development.push.apple.com:443/3/device',
     ];
 
-    /**
-     * @var string
-     */
     private string $endpoint;
-
-    /**
-     * @var string
-     */
     private string $appBundleID;
-
-    /**
-     * @var int
-     */
     private int $port;
-
-    /**
-     * @var string
-     */
     private string $certPath;
-
-    /**
-     * @var string|null
-     */
     private ?string $certPassphrase;
-
-    /**
-     * @var int
-     */
+    private ?string $caCertPath;
     private int $timeout;
 
-    public function __construct(string $environment, string $appBundleID, string $certPath, ?string $certPassphrase = null, ?string $url = null, int $timeout = 10)
+    public function __construct(string $environment, string $appBundleID, string $certPath, ?string $certPassphrase = null, ?string $caCertPath = null, ?string $url = null, int $timeout = 10)
     {
         if ($url === null && isset(static::URLS[$environment])) {
             $url = static::URLS[$environment];
@@ -75,6 +53,7 @@ class APNS extends Handler
         $this->certPath = $certPath;
         $this->certPassphrase = $certPassphrase;
         $this->timeout = $timeout;
+        $this->caCertPath = $caCertPath;
     }
 
     public function addDevice(string $token): void
@@ -144,6 +123,13 @@ class APNS extends Handler
             $options[CURLOPT_KEYPASSWD] = $this->certPassphrase;
         }
 
+        if ($this->caCertPath !== null) {
+            $caCertPath = realpath($this->caCertPath);
+            if ($caCertPath === null || !file_exists($caCertPath) || !is_readable($caCertPath)) {
+                throw new RuntimeException("[APNS] CA not found or not readable for path: {$this->caCertPath}", 404);
+            }
+            $options[CURLOPT_CAINFO] = $caCertPath;
+        }
 
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
