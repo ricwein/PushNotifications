@@ -103,13 +103,6 @@ class ResponseReasonException extends ResponseException
         self::REASON_INTERNAL_SERVER_ERROR,
     ];
 
-    public const GROUP_INVALID_TOKEN_REASONS = [
-        self::REASON_BAD_DEVICE_TOKEN,
-        self::REASON_DEVICE_TOKEN_NOT_FOR_TOPIC,
-        self::REASON_NOT_REGISTERED,
-        self::REASON_INVALID_REGISTRATION,
-    ];
-
     private string $reason;
 
     public function __construct(string $reason, $code = 400, Throwable $previous = null)
@@ -129,6 +122,21 @@ class ResponseReasonException extends ResponseException
 
     public function isInvalidDeviceToken(): bool
     {
-        return in_array($this->reason, static::GROUP_INVALID_TOKEN_REASONS, true);
+        return in_array($this->reason, [
+            self::REASON_BAD_DEVICE_TOKEN,
+            self::REASON_DEVICE_TOKEN_NOT_FOR_TOPIC,
+            self::REASON_NOT_REGISTERED,
+            self::REASON_INVALID_REGISTRATION,
+        ], true);
+    }
+
+    public function isRateLimited(): bool
+    {
+        return in_array($this->reason, [
+            self::REASON_DEVICE_MESSAGE_RATE_EXCEEDED,
+            self::REASON_TOPICS_MESSAGE_RATE_EXCEEDED,
+            self::REASON_TOO_MANY_PROVIDER_TOKEN_UPDATES,
+            self::REASON_TOO_MANY_REQUESTS,
+        ], true);
     }
 }
