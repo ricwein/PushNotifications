@@ -29,13 +29,10 @@ abstract class Handler
         }
     }
 
-    /**
-     * @return array|null
-     */
-    protected function getCurlCAPathOptions(): ?array
+    protected function applyCACertOptions(array $options): array
     {
         if ($this->caCertPath === null) {
-            return null;
+            return $options;
         }
 
         $caCertPath = realpath($this->caCertPath);
@@ -44,10 +41,12 @@ abstract class Handler
         }
 
         if (is_dir($caCertPath)) {
-            return [CURLOPT_CAPATH => $caCertPath];
+            $options[CURLOPT_CAPATH] = $caCertPath;
+            return $options;
         }
 
-        return [CURLOPT_CAINFO => $caCertPath];
+        $options[CURLOPT_CAINFO] = $caCertPath;
+        return $options;
     }
 
     public function addDevice(string $token): void

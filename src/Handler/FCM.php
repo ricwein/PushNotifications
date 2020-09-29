@@ -96,9 +96,7 @@ class FCM extends Handler
             CURLOPT_TIMEOUT => $this->timeout,
         ];
 
-        if (null !== $caCertOptions = $this->getCurlCAPathOptions()) {
-            $options = array_merge($options, $caCertOptions);
-        }
+        $options = $this->applyCACertOptions($options);
 
         $curl = curl_init();
 

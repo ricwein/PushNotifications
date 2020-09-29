@@ -123,9 +123,7 @@ class APNS extends Handler
             $options[CURLOPT_KEYPASSWD] = $this->certPassphrase;
         }
 
-        if (null !== $caCertOptions = $this->getCurlCAPathOptions()) {
-            $options = array_merge($options, $caCertOptions);
-        }
+        $options = $this->applyCACertOptions($options);
 
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
