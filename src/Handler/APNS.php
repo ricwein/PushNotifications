@@ -53,7 +53,12 @@ class APNS extends Handler
         $this->certPath = $certPath;
         $this->certPassphrase = $certPassphrase;
         $this->timeout = $timeout;
-        $this->caCertPath = $caCertPath;
+
+        if ($caCertPath !== null) {
+            $this->caCertPath = $caCertPath;
+        } elseif (class_exists('\Composer\CaBundle\CaBundle')) {
+            $this->caCertPath = \Composer\CaBundle\CaBundle::getSystemCaRootBundlePath();
+        }
     }
 
     public function addDevice(string $token): void
@@ -128,7 +133,12 @@ class APNS extends Handler
             if ($caCertPath === null || !file_exists($caCertPath) || !is_readable($caCertPath)) {
                 throw new RuntimeException("[APNS] CA not found or not readable for path: {$this->caCertPath}", 404);
             }
-            $options[CURLOPT_CAINFO] = $caCertPath;
+
+            if (is_dir($caCertPath)) {
+                $options[CURLOPT_CAPATH] = $caCertPath;
+            } else {
+                $options[CURLOPT_CAINFO] = $caCertPath;
+            }
         }
 
         $curl = curl_init();

@@ -20,6 +20,10 @@
     "ext-curl": "*"
   },
   "require-dev": {
-    "overtrue/phplint": "^2.0"
+    "overtrue/phplint": "^2.0",
+    "composer/ca-bundle": "^1.2"
+  },
+  "suggest": {
+    "composer/ca-bundle": "Provides easy solution for system CA certificates."
   }
 }
