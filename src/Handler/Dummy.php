@@ -15,6 +15,10 @@ class Dummy extends Handler
      */
     private $callback;
 
+    /**
+     * Dummy constructor.
+     * @param callable|null $sendCallback function(array $payload, string $deviceToken)
+     */
     public function __construct(?callable $sendCallback = null)
     {
         $this->callback = $sendCallback;
@@ -59,7 +63,9 @@ class Dummy extends Handler
             'priority' => $priority === Config::PRIORITY_HIGH ? 'high' : 'normal',
         ]);
 
-        call_user_func($this->callback, $payload);
+        foreach ($this->devices as $deviceToken) {
+            call_user_func($this->callback, $payload, $deviceToken);
+        }
 
         return $this->resetAndBuildFeedback();
     }
