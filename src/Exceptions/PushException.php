@@ -4,6 +4,6 @@ namespace ricwein\PushNotification\Exceptions;
 
 use Exception;
 
-class PushException extends Exception
+abstract class PushException extends Exception
 {
 }

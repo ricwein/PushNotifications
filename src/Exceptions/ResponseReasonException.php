@@ -126,6 +126,7 @@ class ResponseReasonException extends ResponseException
             self::REASON_BAD_DEVICE_TOKEN,
             self::REASON_DEVICE_TOKEN_NOT_FOR_TOPIC,
             self::REASON_NOT_REGISTERED,
+            self::REASON_UNREGISTERED,
             self::REASON_INVALID_REGISTRATION,
         ], true);
     }
