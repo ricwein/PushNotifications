@@ -51,6 +51,18 @@ $push->send($message, [
 ]);
 ```
 
+### single message / single handler
+
+For single handler messages it's possible to inline the handler into the device-destination array. The handler is then freed automatically after the message was send.
+
+```php
+use ricwein\PushNotification\{PushNotification, Message, Handler};
+
+$result = (new PushNotification)->send(new Message($body,$title),[
+    '<device-token>' => new Handler\<APNS/FCM/etc.>(...$config);
+]);
+```
+
 ## usage
 
 This class uses the root-namespace `ricwein\PushNotification`.
@@ -72,11 +84,12 @@ Since all push-settings are push-handler specific, the settings are directly app
 
 - APNS:
 ```php
- APNS(
-    string $environment /* (Config::ENV_PRODUCTION / Config::ENV_DEVELOPMENT) */,
+ new APNS(
+    string $environment /* (Config::ENV_PRODUCTION / Config::ENV_DEVELOPMENT / Config::ENV_CUSTOM) */,
     string $appBundleID,
     string $certPath,
     ?string $certPassphrase = null,
+    ?string $caCertPath = null,
     ?string $url = null,
     int $timeout = 10
 )
@@ -84,8 +97,9 @@ Since all push-settings are push-handler specific, the settings are directly app
 
 - FCM:
 ```php
- FCM(
+ new FCM(
     string $token,
+    ?string $caCertPath = null,
     string $url = self::FCM_ENDPOINT,
     int $timeout = 10
 )
@@ -105,7 +119,6 @@ $push->send($message, [
     '<ios-device-token1>' => 'prod',
     '<ios-device-token2>' => 'dev',
 ]);
-
 ```
 
 ### sending
@@ -116,9 +129,16 @@ Sending is either available for a message object or a raw payload.
 - A raw payload (array) is sent '*as it is*' which might **not** be a good idea, if you want to mix APNS and FCM in one request. 
 
 ```php
+$devices = [...];
+
 $message = new Message('body', 'title');
 $message->setSound('test.aiff')->setBadge(2)->setPriority(Config::PRIORITY_NORMAL);
-$push->send($message, [...]);
+$push->send($message, $devices);
+
+/* OR */
+
+$payload = [...];
+$push->sendRaw($payload, $devices);
 ```
 
 ### error handling
@@ -136,14 +156,19 @@ Errors are handled as Exeptions, so it's possible to just throw them. To simply 
 $push->send($message, [...])->throwOnFirstException();
 ```
 
-***Be aware***: Sometimes other failures than usage-errors occur. APNS (HTTP2) can respond with explicit reasons, which will be handled as `ResponseReasonException`. It's a good idea to not just throw them, but handle them other ways. E.g. you might want to delete or update device-tokens which were marked as invalid.
+***Be aware***: Sometimes other failures than usage-errors occur. APNS and FCM can respond with explicit reasons, which will be handled as `ResponseReasonException`. It's a good idea to not just throw them (away), but handle them other ways. E.g. you might want to delete or update device-tokens which were marked as invalid.
 
 ```php
 use \ricwein\PushNotification\Exceptions\ResponseReasonException;
 
 foreach($result->getFailed() as $token => $error) {
-    if ($error instanceof ResponseReasonException && $error->isInvalidDeviceToken()) {
-        // do something with this information.
+    if ($error instanceof ResponseReasonException) {
+        if ($error->isInvalidDeviceToken()) {
+            // $token was invalid
+        } elseif ($error->isRateLimited()) {
+            // the $token device got too many notifications and is currently rate-limited => better wait some time before sending again.
+        }       
+
     }
 }
 ```

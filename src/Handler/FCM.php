@@ -18,7 +18,7 @@ class FCM extends Handler
     private string $token;
     private int $timeout;
 
-    public function __construct(string $token, string $url = self::FCM_ENDPOINT, ?string $caCertPath = null, int $timeout = 30)
+    public function __construct(string $token, ?string $caCertPath = null, string $url = self::FCM_ENDPOINT, int $timeout = 10)
     {
         $this->endpoint = $url;
         $this->token = $token;
