@@ -18,7 +18,7 @@ abstract class Handler
      * @var string[]
      */
     protected array $devices = [];
-    protected ?string $caCertPath;
+    protected ?string $caCertPath = null;
 
     protected function setCaCertPath(?string $caCertPath): void
     {
