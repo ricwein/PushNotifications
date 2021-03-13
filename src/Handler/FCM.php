@@ -44,7 +44,7 @@ class FCM extends Handler
         $payload = [
             'notification' => [
                 'title' => $message->getTitle() ?? (strlen($body) > 64 ? substr($body, 0, 61) . '...' : $body),
-                'body' => $message,
+                'body' => $body,
             ],
             'data' => array_merge([
                 'message' => $message,
