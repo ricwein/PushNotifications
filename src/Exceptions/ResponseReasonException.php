@@ -1,8 +1,6 @@
 <?php
 
-
 namespace ricwein\PushNotification\Exceptions;
-
 
 use Throwable;
 
@@ -112,7 +110,7 @@ class ResponseReasonException extends ResponseException
         }
 
         $this->reason = $reason;
-        parent::__construct("Request failed with reason: [{$code}]: {$reason}", $code, $previous);
+        parent::__construct("Request failed with reason: [$code]: $reason", $code, $previous);
     }
 
     public function getReason(): string

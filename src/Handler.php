@@ -5,6 +5,7 @@
 
 namespace ricwein\PushNotification;
 
+use Composer\CaBundle\CaBundle;
 use Exception;
 use RuntimeException;
 
@@ -24,8 +25,8 @@ abstract class Handler
     {
         if ($caCertPath !== null) {
             $this->caCertPath = $caCertPath;
-        } elseif (class_exists('\Composer\CaBundle\CaBundle')) {
-            $this->caCertPath = \Composer\CaBundle\CaBundle::getSystemCaRootBundlePath();
+        } elseif (class_exists(CaBundle::class)) {
+            $this->caCertPath = CaBundle::getSystemCaRootBundlePath();
         }
     }
 
@@ -37,7 +38,7 @@ abstract class Handler
 
         $caCertPath = realpath($this->caCertPath);
         if ($caCertPath === null || !file_exists($caCertPath) || !is_readable($caCertPath)) {
-            throw new RuntimeException("CA not found or not readable for path: {$this->caCertPath}", 404);
+            throw new RuntimeException("CA not found or not readable for path: $this->caCertPath", 404);
         }
 
         if (is_dir($caCertPath)) {

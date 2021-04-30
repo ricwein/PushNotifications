@@ -18,14 +18,13 @@ $push->send($message, ['<device-token>' => 'fcm']);
 
 ### iOS
 
-> NOTE: The `APNS` Handler uses the *new* apple push servers, which require HTTP2. Therefore, curl with HTTP2 support must be installed. If it's not available, use the *legacy*, ***deprecated*** `APNSBinary` handler instead.
+> NOTE: The `APNS` Handler uses the *new* apple push servers, which require HTTP2. Therefore, curl with HTTP2 support must be installed.
 
 ```php
 use ricwein\PushNotification\{PushNotification, Message, Handler, Config};
 
 $message = new Message('message', 'title', ['payload' => 'data']);
-$apns = new Handler\APNS(Config::ENV_PRODUCTION, 'com.bundle.id', 'cert.pem');
-// $legacy = new Handler\APNSBinary(Config::ENV_PRODUCTION, 'cert.pem');
+$apns = new Handler\APNSCert(Config::ENV_PRODUCTION, 'com.bundle.id', 'cert.pem');
 
 $push = new PushNotification(['apns' => $apns]);
 $push->send($message, ['<device-token>' => 'apns']);
@@ -33,14 +32,14 @@ $push->send($message, ['<device-token>' => 'apns']);
 
 ### mixed
 
-Sending messages to multiple devices of difference operating systems is also simple: 
+Sending messages to multiple devices of difference operating systems is also simple:
 
 ```php
 use ricwein\PushNotification\{PushNotification, Message, Handler, Config};
 
 $message = new Message('message', 'title');
 $fcm = new Handler\FCM('ExampleGooglePushToken12345678987654321');
-$apns = new Handler\APNS(Config::ENV_PRODUCTION, 'com.bundle.id', 'cert.pem');
+$apns = new Handler\APNSCert(Config::ENV_PRODUCTION, 'com.bundle.id', 'cert.pem');
 
 $push = new PushNotification(['apns' => $apns, 'fcm' => $fcm]);
 $push->send($message, [
@@ -84,7 +83,7 @@ Since all push-settings are push-handler specific, the settings are directly app
 
 - APNS:
 ```php
- new APNS(
+ new APNSCert(
     string $environment /* (Config::ENV_PRODUCTION / Config::ENV_DEVELOPMENT / Config::ENV_CUSTOM) */,
     string $appBundleID,
     string $certPath,
@@ -109,9 +108,18 @@ It's also possible to have multiple push-handlers with different configurations 
 
 ```php
 use ricwein\PushNotification\{PushNotification, Message, Handler, Config};
+use Pushok\AuthProvider;
 
-$apnsProd = new Handler\APNS(Config::ENV_PRODUCTION, 'com.bundle.id', 'cert.pem');
-$apnsDev = new Handler\APNS(Config::ENV_DEVELOPMENT, 'com.bundle.id', 'cert-dev.pem');
+// @see https://github.com/edamov/pushok
+$apnsProd = new Handler\APNS(AuthProvider\Token::create([
+    'key_id' => 'AAAABBBBCC', // The Key ID obtained from Apple developer account
+    'team_id' => 'DDDDEEEEFF', // The Team ID obtained from Apple developer account
+    'app_bundle_id' => 'com.app.Test', // The bundle ID for app obtained from Apple developer account
+    'private_key_path' => __DIR__ . '/private_key.p8', // Path to private key
+    'private_key_secret' => null // Private key secret
+]), Config::ENV_PRODUCTION);
+$apnsDev = new Handler\APNS(..., Config::ENV_DEVELOPMENT);
+
 $message = new Message('message', 'title');
 $push = new PushNotification(['prod' => $apnsProd, 'dev' => $apnsDev]);
 

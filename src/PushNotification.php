@@ -22,7 +22,7 @@ class PushNotification
     {
         foreach ($handlers as $handler) {
             if (!$handler instanceof Handler) {
-                throw new RuntimeException(sprintf('Invalid Handler of type: %s', is_object($handler) ? get_class($handler) : gettype($handler)));
+                throw new RuntimeException(sprintf('Invalid Handler of type: %s', get_debug_type($handler)));
             }
         }
 
@@ -51,7 +51,7 @@ class PushNotification
                 continue;
             }
 
-            $feedback[$token] = new RuntimeException(sprintf('Invalid Handler of type %s for device: %s', is_object($deviceHandler) ? get_class($deviceHandler) : gettype($deviceHandler), $token), 500);
+            $feedback[$token] = new RuntimeException(sprintf('Invalid Handler of type %s for device: %s', get_debug_type($deviceHandler), $token), 500);
         }
 
         return [$handlers, $feedback];

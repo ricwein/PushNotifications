@@ -1,4 +1,7 @@
 <?php
+/**
+ * @noinspection PhpMultipleClassDeclarationsInspection
+ */
 
 namespace ricwein\PushNotification\Handler;
 
@@ -83,7 +86,7 @@ class FCM extends Handler
         $content = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
 
         $headers = [
-            "Authorization: key={$this->token}",
+            "Authorization: key=$this->token",
             "Content-Type: application/json",
         ];
 
@@ -110,13 +113,13 @@ class FCM extends Handler
             if ($response === false || 200 !== $httpStatusCode) {
                 $errorCode = curl_errno($curl);
                 $error = curl_error($curl);
-                return [new RequestException("[FCM ]Request failed with: [{$errorCode}]: {$error}", $httpStatusCode)];
+                return [new RequestException("[FCM ]Request failed with: [$errorCode]: $error", $httpStatusCode)];
             }
 
             $result = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
 
             if ($result === null || !isset($result['success'], $result['failure'], $result['results']) || !is_array($result['results'])) {
-                return [new ResponseException("[FCM] Requests was send, but resulted in an unknown error. Response: {$response}", 400)];
+                return [new ResponseException("[FCM] Requests was send, but resulted in an unknown error. Response: $response", 400)];
             }
 
             $devicesCount = count($this->devices);
@@ -155,7 +158,7 @@ class FCM extends Handler
             if (in_array($error, ResponseReasonException::GROUP_VALID_REASONS, true)) {
                 $feedback[$deviceToken] = new ResponseReasonException($error, 400);
             } else {
-                $feedback[$deviceToken] = new ResponseException("[FCM] Request failed with unknown error: {$error}", 400);
+                $feedback[$deviceToken] = new ResponseException("[FCM] Request failed with unknown error: $error", 400);
             }
         }
 

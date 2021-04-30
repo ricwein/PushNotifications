@@ -2,10 +2,15 @@
 
 namespace ricwein\PushNotification\Handler;
 
-use JsonException;
+use Exception;
+use Pushok\AuthProviderInterface;
+use Pushok\Client;
+use Pushok\InvalidPayloadException;
+use Pushok\Notification;
+use Pushok\Payload;
+use Pushok\Response;
 use ricwein\PushNotification\Config;
 use ricwein\PushNotification\Exceptions\RequestException;
-use ricwein\PushNotification\Exceptions\ResponseException;
 use ricwein\PushNotification\Exceptions\ResponseReasonException;
 use ricwein\PushNotification\Handler;
 use ricwein\PushNotification\Message;
@@ -13,56 +18,22 @@ use RuntimeException;
 
 class APNS extends Handler
 {
-    private const URLS = [
-        Config::ENV_PRODUCTION => 'https://api.push.apple.com:443/3/device',
-        Config::ENV_DEVELOPMENT => 'https://api.development.push.apple.com:443/3/device',
-    ];
+    private string $environment;
+    private AuthProviderInterface $authProvider;
 
-    private string $endpoint;
-    private string $appBundleID;
-    private int $port;
-    private string $certPath;
-    private ?string $certPassphrase;
-    private int $timeout;
-
-    public function __construct(string $environment, string $appBundleID, string $certPath, ?string $certPassphrase = null, ?string $caCertPath = null, ?string $url = null, int $timeout = 10)
+    public function __construct(AuthProviderInterface $authProvider, string $environment = Config::ENV_PRODUCTION)
     {
-        if ($url === null && isset(static::URLS[$environment])) {
-            $url = static::URLS[$environment];
-        } elseif ($url === null) {
-            throw new RuntimeException("[APNS] Unknown or unsupported environment {$environment}", 500);
-        }
-
-        if (false === $urlComponents = parse_url($url)) {
-            throw new RuntimeException("[APNS] Invalid endpoint-url given for APNS, failed to parse: {$url}", 500);
-        }
-
-        if (!isset($urlComponents['host'])) {
-            throw new RuntimeException("[APNS] Invalid endpoint-url given for APNS, missing host in: {$url}", 500);
-        }
-
-        $this->endpoint = sprintf("%s://%s%s", $urlComponents['scheme'] ?? 'https', $urlComponents['host'], $urlComponents['path'] ?? '/3/device');
-        $this->port = !empty($urlComponents['port']) ? (int)$urlComponents['port'] : 443;
-
-        if (!file_exists($certPath) || !is_readable($certPath)) {
-            throw new RuntimeException("[APNS] Certificate not found or not readable for path: {$certPath}", 404);
-        }
-
-        $this->appBundleID = $appBundleID;
-        $this->certPath = $certPath;
-        $this->certPassphrase = $certPassphrase;
-        $this->timeout = $timeout;
-
-        $this->setCaCertPath($caCertPath);
+        $this->environment = $environment;
+        $this->authProvider = $authProvider;
     }
 
     public function addDevice(string $token): void
     {
         if (64 !== $length = strlen($token)) {
-            throw new RuntimeException("[APNS] Invalid device-token {$token}, length must be 64 chars but is {$length}.", 500);
+            throw new RuntimeException("[APNS] Invalid device-token $token, length must be 64 chars but is $length.", 500);
         }
         if (!ctype_xdigit($token)) {
-            throw new RuntimeException("[APNS] Invalid device-token {$token}, must be of type hexadecimal but is not.");
+            throw new RuntimeException("[APNS] Invalid device-token $token, must be of type hexadecimal but is not.");
         }
         $this->devices[] = $token;
     }
@@ -70,7 +41,8 @@ class APNS extends Handler
     /**
      * @param Message $message
      * @return array
-     * @throws JsonException
+     * @throws InvalidPayloadException
+     * @throws RequestException
      */
     public function send(Message $message): array
     {
@@ -90,90 +62,45 @@ class APNS extends Handler
     }
 
     /**
-     * @param array $payload
-     * @param int $priority
-     * @return array
-     * @throws JsonException
+     * @throws InvalidPayloadException
+     * @throws RequestException
      */
     public function sendRaw(array $payload, int $priority = Config::PRIORITY_HIGH): array
     {
-        if (count($this->devices) < 1) {
-            return [];
+        $messagePayload = Payload::create();
+        foreach ($payload as $key => $value) {
+            $messagePayload->addCustomValue($key, $value);
         }
 
-        $content = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+        $notifications = array_map(static function (string $deviceToken) use ($priority, $messagePayload): Notification {
+            $notification = new Notification($messagePayload, $deviceToken);
+            if ($priority === Config::PRIORITY_HIGH) {
+                $notification->setHighPriority();
+            } else {
+                $notification->setLowPriority();
+            }
+            return $notification;
+        }, $this->devices);
 
-        $headers = [
-            sprintf('apns-priority: %d', $priority === Config::PRIORITY_HIGH ? 10 : 5),
-            "apns-topic: {$this->appBundleID}",
-            "Content-Type: application/json",
-        ];
+        $client = new Client($this->authProvider, $this->environment === Config::ENV_PRODUCTION);
+        $client->addNotifications($notifications);
 
-        $options = [
-            CURLOPT_PORT => $this->port,
-            CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $content,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => $this->timeout,
-            CURLOPT_SSLCERT => $this->certPath,
-        ];
-
-        if ($this->certPassphrase !== null) {
-            $options[CURLOPT_KEYPASSWD] = $this->certPassphrase;
+        try {
+            $responses = $client->push(); // returns an array of ApnsResponseInterface (one Response per Notification)
+        } catch (Exception $exception) {
+            throw new RequestException('[APNS] Request failed', $exception->getCode(), $exception);
         }
-
-        $options = $this->applyCACertOptions($options);
-
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
 
         $feedback = [];
-        foreach ($this->devices as $deviceKey => $deviceToken) {
-
-            // cleanup device tokens
-            $deviceToken = str_replace(' ', '', trim($deviceToken, '<> '));
-            $options[CURLOPT_URL] = "{$this->endpoint}/{$deviceToken}";
-
-            // setup curl for device push notification
-            curl_setopt_array($curl, $options);
-
-            // execute request
-            $result = curl_exec($curl);
-
-            $httpStatusCode = curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
-
-            // success!
-            if ($result !== false && $httpStatusCode === 200) {
-                unset($this->devices[$deviceKey]);
-                $feedback[$deviceToken] = null;
+        /** @var Response $response */
+        foreach ($responses as $response) {
+            if ($response->getStatusCode() === Response::APNS_SUCCESS) {
+                $feedback[$response->getDeviceToken()] = null;
                 continue;
             }
 
-            // error handling
-            $errorCode = curl_errno($curl);
-            $error = curl_error($curl);
-
-            if ($result === false) {
-                if (!empty($error)) {
-                    $feedback[$deviceToken] = new RequestException("[APNS] Request failed with: [{$errorCode}]: {$error}", 500);
-                } elseif ($httpStatusCode !== 0) {
-                    $feedback[$deviceToken] = new RequestException("[APNS] Request failed with: HTTP status code {$httpStatusCode}.", 500);
-                } else {
-                    $feedback[$deviceToken] = new RequestException("[APNS] Request failed.", 500);
-                }
-                continue;
-            }
-
-            $result = @json_decode($result, true, 512, JSON_THROW_ON_ERROR);
-            if (isset($result['reason']) && in_array($result['reason'], ResponseReasonException::GROUP_VALID_REASONS, true)) {
-                $feedback[$deviceToken] = new ResponseReasonException($result['reason'], $httpStatusCode);
-            } else {
-                $feedback[$deviceToken] = new ResponseException("[APNS] Request failed with: [{$errorCode}]: {$error}", $httpStatusCode);
-            }
+            $feedback[$response->getDeviceToken()] = new ResponseReasonException($response->getErrorReason(), $response->getStatusCode());
         }
-
-        curl_close($curl);
 
         $this->devices = [];
         return $feedback;

@@ -3,7 +3,6 @@
 namespace ricwein\PushNotification;
 
 use Exception;
-use ricwein\PushNotification\Exceptions\RequestException;
 use ricwein\PushNotification\Exceptions\ResponseReasonException;
 use Throwable;
 
@@ -20,7 +19,7 @@ class Result
     }
 
     /**
-     * @return array<Exception|null>
+     * @return array<string, Exception|null>
      */
     public function getFeedback(): array
     {
@@ -28,7 +27,7 @@ class Result
     }
 
     /**
-     * @return array<Exception>
+     * @return array<string, Exception>
      */
     public function getFailed(): array
     {
@@ -54,7 +53,7 @@ class Result
     }
 
     /**
-     * @return array<string>
+     * @return string[]
      */
     public function getInvalidDeviceTokes(): array
     {

@@ -15,9 +15,10 @@
     }
   },
   "require": {
-    "php": ">= 7.4.0",
+    "php": ">= 8.0",
     "ext-json": "*",
-    "ext-curl": "*"
+    "ext-curl": "*",
+    "edamov/pushok": "^0.13.0"
   },
   "require-dev": {
     "overtrue/phplint": "^2.0",
