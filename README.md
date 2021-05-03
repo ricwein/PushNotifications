@@ -22,9 +22,16 @@ $push->send($message, ['<device-token>' => 'fcm']);
 
 ```php
 use ricwein\PushNotification\{PushNotification, Message, Handler, Config};
+use Pushok\AuthProvider;
 
 $message = new Message('message', 'title', ['payload' => 'data']);
-$apns = new Handler\APNSCert(Config::ENV_PRODUCTION, 'com.bundle.id', 'cert.pem');
+$apns = new Handler\APNS(AuthProvider\Token::create([
+    'key_id' => 'AAAABBBBCC', // The Key ID obtained from Apple developer account
+    'team_id' => 'DDDDEEEEFF', // The Team ID obtained from Apple developer account
+    'app_bundle_id' => 'com.app.Test', // The bundle ID for app obtained from Apple developer account
+    'private_key_path' => __DIR__ . '/private_key.p8', // Path to private key
+    'private_key_secret' => null // Private key secret
+]), Config::ENV_PRODUCTION);
 
 $push = new PushNotification(['apns' => $apns]);
 $push->send($message, ['<device-token>' => 'apns']);
@@ -39,7 +46,7 @@ use ricwein\PushNotification\{PushNotification, Message, Handler, Config};
 
 $message = new Message('message', 'title');
 $fcm = new Handler\FCM('ExampleGooglePushToken12345678987654321');
-$apns = new Handler\APNSCert(Config::ENV_PRODUCTION, 'com.bundle.id', 'cert.pem');
+$apns = new Handler\APNS($authToken, Config::ENV_PRODUCTION);
 
 $push = new PushNotification(['apns' => $apns, 'fcm' => $fcm]);
 $push->send($message, [
@@ -57,7 +64,7 @@ For single handler messages it's possible to inline the handler into the device-
 ```php
 use ricwein\PushNotification\{PushNotification, Message, Handler};
 
-$result = (new PushNotification)->send(new Message($body,$title),[
+$result = (new PushNotification)->send(new Message($body,$title), [
     '<device-token>' => new Handler\<APNS/FCM/etc.>(...$config);
 ]);
 ```
@@ -83,14 +90,9 @@ Since all push-settings are push-handler specific, the settings are directly app
 
 - APNS:
 ```php
- new APNSCert(
-    string $environment /* (Config::ENV_PRODUCTION / Config::ENV_DEVELOPMENT / Config::ENV_CUSTOM) */,
-    string $appBundleID,
-    string $certPath,
-    ?string $certPassphrase = null,
-    ?string $caCertPath = null,
-    ?string $url = null,
-    int $timeout = 10
+ new APNS(
+    \Pushok\AuthProviderInterface $authProvider, /* @see https://github.com/edamov/pushok/blob/master/README.md#getting-started */
+    string $environment /* (Config::ENV_PRODUCTION / Config::ENV_DEVELOPMENT / Config::ENV_CUSTOM) */
 )
  ```
 
@@ -108,17 +110,10 @@ It's also possible to have multiple push-handlers with different configurations 
 
 ```php
 use ricwein\PushNotification\{PushNotification, Message, Handler, Config};
-use Pushok\AuthProvider;
 
 // @see https://github.com/edamov/pushok
-$apnsProd = new Handler\APNS(AuthProvider\Token::create([
-    'key_id' => 'AAAABBBBCC', // The Key ID obtained from Apple developer account
-    'team_id' => 'DDDDEEEEFF', // The Team ID obtained from Apple developer account
-    'app_bundle_id' => 'com.app.Test', // The bundle ID for app obtained from Apple developer account
-    'private_key_path' => __DIR__ . '/private_key.p8', // Path to private key
-    'private_key_secret' => null // Private key secret
-]), Config::ENV_PRODUCTION);
-$apnsDev = new Handler\APNS(..., Config::ENV_DEVELOPMENT);
+$apnsProd = new Handler\APNS($tokenProd, Config::ENV_PRODUCTION);
+$apnsDev = new Handler\APNS($tokenDev, Config::ENV_DEVELOPMENT);
 
 $message = new Message('message', 'title');
 $push = new PushNotification(['prod' => $apnsProd, 'dev' => $apnsDev]);
@@ -137,6 +132,8 @@ Sending is either available for a message object or a raw payload.
 - A raw payload (array) is sent '*as it is*' which might **not** be a good idea, if you want to mix APNS and FCM in one request. 
 
 ```php
+use ricwein\PushNotification\{Message, Config};
+
 $devices = [...];
 
 $message = new Message('body', 'title');
@@ -158,13 +155,13 @@ $result = $push->send($message, [...]);
 $errors = $result->getFailed(); 
 ```
 
-Errors are handled as Exeptions, so it's possible to just throw them. To simply just throw the first error if one occurred, call:
+Errors are handled as Exceptions, so it's possible to just throw them. To simply just throw the first error if one occurred, call:
 
 ```php
 $push->send($message, [...])->throwOnFirstException();
 ```
 
-***Be aware***: Sometimes other failures than usage-errors occur. APNS and FCM can respond with explicit reasons, which will be handled as `ResponseReasonException`. It's a good idea to not just throw them (away), but handle them other ways. E.g. you might want to delete or update device-tokens which were marked as invalid.
+***Be aware***: Sometimes other failures than usage-errors occur. APNS and FCM can respond with explicit reasons, which will be handled as `ResponseReasonException`. **It's a good idea to not just throw them (away)**, but handle them other ways. E.g. you might want to delete or update device-tokens which were marked as invalid.
 
 ```php
 use \ricwein\PushNotification\Exceptions\ResponseReasonException;
