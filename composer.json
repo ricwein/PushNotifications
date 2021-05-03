@@ -18,6 +18,7 @@
     "php": ">= 8.0",
     "ext-json": "*",
     "ext-curl": "*",
+    "ext-bcmath": "*",
     "edamov/pushok": "^0.13.0"
   },
   "require-dev": {
