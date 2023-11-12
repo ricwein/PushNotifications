@@ -88,6 +88,7 @@ class FCM extends Handler
         $headers = [
             "Authorization: key=$this->token",
             "Content-Type: application/json",
+            "Content-Length: " . strlen($content),
         ];
 
         $options = [
@@ -125,7 +126,7 @@ class FCM extends Handler
             $devicesCount = count($this->devices);
             if (((int)$result['failure'] + (int)$result['success']) !== $devicesCount || count($result['results']) !== $devicesCount) {
                 return [new ResponseException(sprintf(
-                    '[FCM] Mismatching Feedback Count. Message was send to %d devices, and %d succeeded and %d failed. %d reported an result.',
+                    '[FCM] Mismatching Feedback Count. Message was send to %d devices, %d succeeded and %d failed. %d reported an result.',
                     $devicesCount,
                     $result['success'],
                     $result['failure'],
@@ -134,7 +135,6 @@ class FCM extends Handler
             }
 
             return $this->parseAndBuildFeedback($result['results']);
-
         } finally {
             $this->devices = [];
             curl_close($curl);

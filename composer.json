@@ -15,15 +15,15 @@
     }
   },
   "require": {
-    "php": ">= 8.0",
+    "php": "^8.0",
     "ext-json": "*",
     "ext-curl": "*",
     "ext-bcmath": "*",
-    "edamov/pushok": "^0.13.0"
+    "edamov/pushok": "^0.15.0"
   },
   "require-dev": {
-    "overtrue/phplint": "^2.0",
-    "composer/ca-bundle": "^1.2"
+    "overtrue/phplint": "^9.0",
+    "composer/ca-bundle": "^1.3"
   },
   "suggest": {
     "composer/ca-bundle": "Provides easy solution for system CA certificates."
